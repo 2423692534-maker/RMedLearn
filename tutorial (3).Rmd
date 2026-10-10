@@ -1,7 +1,7 @@
 ---
-title: "R语言基础教程（第9-11讲）"
+title: "R语言基础教程（第15-17讲）"
 tutorial:
-  id: "r-language-course-9-11"
+  id: "r-language-course-15-17"
   version: "v9"
 output:
   learnr::tutorial:
@@ -24,15 +24,15 @@ options(tutorial.storage = list(
 ))
 learnr::tutorial_options(exercise.eval = FALSE)
 gradethis::gradethis_setup()
-.r911_live_code <- new.env(parent = emptyenv())
-r911_session_bucket <- function(session) {
+.r1517_live_code <- new.env(parent = emptyenv())
+r1517_session_bucket <- function(session) {
   if (is.null(session) || is.null(session$token)) stop("无法识别当前 learnr 会话，请重新打开教程后再试。", call. = FALSE)
   key <- as.character(session$token)
-  if (!exists(key, envir = .r911_live_code, inherits = FALSE)) assign(key, new.env(parent = emptyenv()), envir = .r911_live_code)
-  get(key, envir = .r911_live_code, inherits = FALSE)
+  if (!exists(key, envir = .r1517_live_code, inherits = FALSE)) assign(key, new.env(parent = emptyenv()), envir = .r1517_live_code)
+  get(key, envir = .r1517_live_code, inherits = FALSE)
 }
 
-r911_extract_setwd_path <- function(code) {
+r1517_extract_setwd_path <- function(code) {
   exprs <- tryCatch(parse(text = paste(code, collapse = "\n")), error = function(e) NULL)
   if (is.null(exprs)) return(NULL)
   found <- NULL
@@ -49,45 +49,45 @@ r911_extract_setwd_path <- function(code) {
   found
 }
 
-r911_saved_workdir <- function() {
+r1517_saved_workdir <- function() {
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
     caller <- parent.frame()
     if (exists("session", envir = caller, inherits = TRUE)) session <- get("session", envir = caller, inherits = TRUE)
   }
-  bucket <- r911_session_bucket(session)
-  if (!exists(".r911_workdir", envir = bucket, inherits = FALSE)) {
+  bucket <- r1517_session_bucket(session)
+  if (!exists(".r1517_workdir", envir = bucket, inherits = FALSE)) {
     stop("请先运行本文件开头的‘设置工作空间’示例，把 setwd() 改为你自己的课程数据文件夹并点击 Run Code。", call. = FALSE)
   }
-  get(".r911_workdir", envir = bucket, inherits = FALSE)
+  get(".r1517_workdir", envir = bucket, inherits = FALSE)
 }
 
-r911_is_absolute_path <- function(path) {
+r1517_is_absolute_path <- function(path) {
   is.character(path) && length(path) == 1L && grepl("^(?:[A-Za-z]:[/\\]|/|~[/\\]?)", path)
 }
-r911_resolve_path <- function(path, workdir = r911_saved_workdir()) {
+r1517_resolve_path <- function(path, workdir = r1517_saved_workdir()) {
   if (!is.character(path) || length(path) != 1L || !nzchar(path)) return(path)
-  if (r911_is_absolute_path(path)) return(path.expand(path))
+  if (r1517_is_absolute_path(path)) return(path.expand(path))
   file.path(workdir, path)
 }
-r911_prepare_workdir <- function(envir = parent.frame()) {
-  workdir <- r911_saved_workdir(); target <- envir
+r1517_prepare_workdir <- function(envir = parent.frame()) {
+  workdir <- r1517_saved_workdir(); target <- envir
   assign("getwd", local({ wd <- workdir; function() wd }), envir = target)
-  assign("read.csv", local({ wd <- workdir; function(file, ...) utils::read.csv(r911_resolve_path(file, wd), ...) }), envir = target)
-  assign("read.table", local({ wd <- workdir; function(file, ...) utils::read.table(r911_resolve_path(file, wd), ...) }), envir = target)
-  assign("write.csv", local({ wd <- workdir; function(x, file = "", ...) { out <- if (is.character(file) && length(file)==1L && nzchar(file)) r911_resolve_path(file, wd) else file; utils::write.csv(x, file=out, ...) } }), envir = target)
+  assign("read.csv", local({ wd <- workdir; function(file, ...) utils::read.csv(r1517_resolve_path(file, wd), ...) }), envir = target)
+  assign("read.table", local({ wd <- workdir; function(file, ...) utils::read.table(r1517_resolve_path(file, wd), ...) }), envir = target)
+  assign("write.csv", local({ wd <- workdir; function(x, file = "", ...) { out <- if (is.character(file) && length(file)==1L && nzchar(file)) r1517_resolve_path(file, wd) else file; utils::write.csv(x, file=out, ...) } }), envir = target)
   invisible(workdir)
 }
 
-r911_replay <- function(labels) {
+r1517_replay <- function(labels) {
   labels <- as.character(labels)
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
     caller <- parent.frame()
     if (exists("session", envir = caller, inherits = TRUE)) session <- get("session", envir = caller, inherits = TRUE)
   }
-  bucket <- r911_session_bucket(session)
-  r911_prepare_workdir(envir = parent.frame())
+  bucket <- r1517_session_bucket(session)
+  r1517_prepare_workdir(envir = parent.frame())
   for (label in labels) {
     if (!exists(label, envir = bucket, inherits = FALSE)) stop(sprintf("请先完成前面的代码框（%s）并点击 Run Code。", label), call. = FALSE)
     code <- paste(get(label, envir = bucket, inherits = FALSE), collapse = "\n")
@@ -98,15 +98,15 @@ r911_replay <- function(labels) {
 }
 ```
 
-```{r r911-track-live-code, context="server-start", include=FALSE}
+```{r r1517-track-live-code, context="server-start", include=FALSE}
 learnr::event_register_handler("exercise_result", function(session, event, data) {
   if (!is.null(data$label) && !is.null(data$code)) {
-    bucket <- r911_session_bucket(session)
+    bucket <- r1517_session_bucket(session)
     assign(data$label, data$code, envir = bucket)
     
     # 当学生完成“设置工作空间”代码框后，记录其实际设置的目录。
-    if (identical(data$label, "r911-prep-workdir")) {
-      wd <- r911_extract_setwd_path(data$code)
+    if (identical(data$label, "r1517-prep-workdir")) {
+      wd <- r1517_extract_setwd_path(data$code)
 
       if (!is.null(wd) && dir.exists(path.expand(wd))) {
         wd <- normalizePath(
@@ -115,7 +115,7 @@ learnr::event_register_handler("exercise_result", function(session, event, data)
           mustWork = TRUE
         )
 
-        assign(".r911_workdir", wd, envir = bucket)
+        assign(".r1517_workdir", wd, envir = bucket)
 
         # RMedLearn 安装包中已经内置 elder1.csv 与 elder2.csv。
         # 学生成功设置工作空间后，将这两个数据文件自动准备到该目录。
@@ -224,7 +224,7 @@ h4, .section.level4 h4 { font-size: 17px !important; font-weight: 700 !important
 .tutorialTitle::after,
 .topicsHeader .tutorialTitle::after,
 .topicsListContainer .tutorialTitle::after {
-  content: "第9–11讲";
+  content: "第15–17讲";
   display: block;
   margin-top: 6px;
   font-size: 18px;
@@ -320,1205 +320,1316 @@ h4, .section.level4 h4 { font-size: 17px !important; font-weight: 700 !important
 .section.level4 > h4::before { display: none !important; content: none !important; }
 </style>
 
-# 第9-11讲 tidyverse数据整理与管道
+# 第15-17讲 统计描述、apply族与假设检验
 ## 统一讲前准备
 <div class="module-explain">
 
-第9-11讲继续使用 `elder1.csv`、`elder2.csv`，并进入 `dplyr`、`tidyr` 与管道符。请先在下面把 `setwd()` 改成你自己的课程工作文件夹并运行；设置成功后，RMedLearn 会自动把包内的 `elder1.csv`、`elder2.csv` 复制到该文件夹（若已有同名文件则不会覆盖）。扩展包只需安装一次，但每次新开 R 会话需要 `library()` 加载。
+第15-17讲使用 `elder1.csv` 和 `elder2.csv` 完成医学数据的统计描述与推断。请先在下面把 `setwd()` 改成你自己的课程工作文件夹并运行；设置成功后，RMedLearn 会自动把包内的 `elder1.csv`、`elder2.csv` 复制到该文件夹（若已有同名文件则不会覆盖）。部分示例涉及 `dplyr`、`gmodels`、`nortest` 等扩展包；如果尚未安装，需要先在 RStudio Console 中安装一次。
 
 </div>
 <div class="module-example">
 
-```{r r911-prep-workdir, exercise=TRUE}
+```{r r1517-prep-workdir, exercise=TRUE}
 setwd("D:/R2022")  # 将路径改成你自己的课程数据文件夹
 getwd()          # 查看当前设置的工作空间
 ```
 
-```{r r911-prep-workdir-solution}
+```{r r1517-prep-workdir-solution}
 setwd("D:/R2022")  # 将路径改成你自己的课程数据文件夹
 getwd()          # 查看当前设置的工作空间
 ```
 
 </div>
 
-## 第9讲 R语言必学包 dplyr
+## 第15讲 常用统计描述方法
 ### 引言
 <div class="module-explain">
 
-`dplyr` 专注于 data frame 数据清洗与整理。Word 教程把它作为医学数据分析必须掌握的包，并重点介绍 join、`filter()`、`arrange()`、`select()`、`mutate()`。与基础 R 相比，这些函数的语义通常更直接。
+统计分析包括统计描述和统计推断。统计描述中，定量资料通常从集中趋势与离散趋势描述，如均数、标准差、中位数、四分位间距；分类资料主要描述样本量、率、比等。假设检验等统计推断将在第17讲继续。
 
 </div>
 ### 讲前准备
-```{r static9-install, eval=FALSE, echo=TRUE}
-install.packages("dplyr")     # 首次使用时安装 dplyr
-# install.packages("tidyverse") # 也可以安装包含 dplyr 的 tidyverse
-library(dplyr)                 # 每次新会话加载 dplyr
-```
 <div class="module-example">
-<div class="module-label">示例1：加载包并导入数据</div>
+<div class="module-label">示例1：导入并合并数据</div>
 
-```{r demo9-paired-1-setup, include=FALSE}
-r911_prepare_workdir()
+```{r demo15-paired-1-setup, include=FALSE}
+r1517_prepare_workdir()
 ```
 
-```{r demo9-paired-1, exercise=TRUE}
-library(dplyr)                 # 加载 dplyr 包
-t1 <- read.csv("elder1.csv")   # 导入 elder1，保存为 t1
-t2 <- read.csv("elder2.csv")   # 导入 elder2，保存为 t2
-dim(t1)                        # 查看 t1 维度
-dim(t2)                        # 查看 t2 维度
+```{r demo15-paired-1, exercise=TRUE}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
 ```
 
-```{r demo9-paired-1-solution}
-library(dplyr)                 # 加载 dplyr 包
-t1 <- read.csv("elder1.csv")   # 导入 elder1，保存为 t1
-t2 <- read.csv("elder2.csv")   # 导入 elder2，保存为 t2
-dim(t1)                        # 查看 t1 维度
-dim(t2)                        # 查看 t2 维度
+```{r demo15-paired-1-solution}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习1：加载包并导入数据
+#### 练习1：导入并合并数据
 
-**任务：** 加载 `dplyr`，导入 `elder1.csv` 为 `t1`、`elder2.csv` 为 `t2`，查看维度。
+**任务：** 导入 `elder1.csv` 为 `t1`、`elder2.csv` 为 `t2`，按 `ID` 合并为 `tt`。
 
-```{r ex9-1-setup, include=FALSE}
-r911_prepare_workdir()
+```{r ex15-1-setup, include=FALSE}
+r1517_prepare_workdir()
 ```
 
-```{r ex9-1, exercise=TRUE}
+```{r ex15-1, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex9-1-hint}
-library(dplyr)                 # 加载 dplyr 包
-t1 <- read.csv("elder1.csv")   # 导入 elder1，保存为 t1
-t2 <- read.csv("elder2.csv")   # 导入 elder2，保存为 t2
-dim(t1)                        # 查看 t1 维度
-dim(t2)                        # 查看 t2 维度
+```{r ex15-1-hint}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
 ```
 
-```{r ex9-1-solution}
-library(dplyr)                 # 加载 dplyr 包
-t1 <- read.csv("elder1.csv")   # 导入 elder1，保存为 t1
-t2 <- read.csv("elder2.csv")   # 导入 elder2，保存为 t2
-dim(t1)                        # 查看 t1 维度
-dim(t2)                        # 查看 t2 维度
+```{r ex15-1-solution}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
 ```
 
-```{r ex9-1-check}
+```{r ex15-1-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 一、数据库合并
+### 一、定量资料的描述
 <div class="module-explain">
 
-`dplyr` 的 join 系列按键变量合并数据。Word 列出：`left_join()`、`right_join()`、`inner_join()`、`full_join()`、`semi_join()`、`anti_join()`。前四个属于变形连接，会把匹配到的变量加到结果中；`semi_join()` 和 `anti_join()` 属于过滤连接，分别保留能匹配或不能匹配第二个数据集的第一表行。实际合并时应明确写 `by=`。
+Word 主要使用 `summary()`、`mean()`、`sd()`、`median()`、`IQR()`、`range()`。`na.rm = TRUE` 表示在计算时忽略缺失值。`summary()` 能一次给出数值变量的最小值、四分位数、中位数、均值、最大值等信息。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例2：四种常见join</div>
+<div class="module-label">示例2：定量资料描述</div>
 
-```{r demo9-join-setup, include=FALSE}
-r911_replay("ex9-1")
+```{r demo15-quant-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r demo9-join, exercise=TRUE}
-t3 <- inner_join(t1, t2, by = "ID")  # 内连接：只保留两个数据集都存在的 ID
-t4 <- full_join(t1, t2, by = "ID")   # 全连接：保留两边全部 ID
-t5 <- left_join(t1, t2, by = "ID")   # 左连接：保留 t1 的全部 ID
-t6 <- right_join(t1, t2, by = "ID")  # 右连接：保留 t2 的全部 ID
-dim(t3)                               # 查看内连接维度
+```{r demo15-quant, exercise=TRUE}
+summary(tt[c("height", "weight")])  # 同时汇总身高和体重
+mean(tt$height, na.rm = TRUE)         # 计算身高均数，忽略缺失
+sd(tt$height, na.rm = TRUE)           # 计算身高标准差
+median(tt$height, na.rm = TRUE)       # 计算身高中位数
+IQR(tt$height, na.rm = TRUE)          # 计算身高四分位间距
+range(tt$height, na.rm = TRUE)        # 计算身高最小值和最大值
 ```
 
-```{r demo9-join-solution}
-t3 <- inner_join(t1, t2, by = "ID")  # 内连接：只保留两个数据集都存在的 ID
-t4 <- full_join(t1, t2, by = "ID")   # 全连接：保留两边全部 ID
-t5 <- left_join(t1, t2, by = "ID")   # 左连接：保留 t1 的全部 ID
-t6 <- right_join(t1, t2, by = "ID")  # 右连接：保留 t2 的全部 ID
-dim(t3)                               # 查看内连接维度
-```
-
-</div>
-```{r static9-filtering-joins, eval=FALSE, echo=TRUE}
-semi_join(t1, t2, by = "ID")  # 只保留 t1 中能在 t2 匹配到 ID 的行
-anti_join(t1, t2, by = "ID")  # 只保留 t1 中不能在 t2 匹配到 ID 的行
-```
-<div class="module-exercise">
-
-#### 练习2：inner_join合并
-
-**任务：** 基于练习1实际导入的 `t1`、`t2`，按 `ID` 内连接，结果保存为 `t3`。
-
-```{r ex9-2-setup, include=FALSE}
-r911_replay("ex9-1")
-```
-
-```{r ex9-2, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex9-2-hint}
-t3 <- inner_join(t1, t2, by = "ID")  # 按 ID 内连接
-dim(t3)                               # 查看 t3 行列数
-```
-
-```{r ex9-2-solution}
-t3 <- inner_join(t1, t2, by = "ID")  # 按 ID 内连接
-dim(t3)                               # 查看 t3 行列数
-```
-
-```{r ex9-2-check}
-gradethis::grade_code()
-```
-
-</div>
-### 二、筛选：filter()
-<div class="module-explain">
-
-`filter()` 按逻辑条件筛选行。多个逗号分隔的条件等价于“且”；也可以显式写 `&` 或 `|`。与基础 R 的 `data[data$var... , ]` 相比，它允许直接写变量名。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例3：filter筛选</div>
-
-```{r demo9-filter-setup, include=FALSE}
-r911_replay("ex9-1")
-```
-
-```{r demo9-filter, exercise=TRUE}
-t11 <- filter(t1, SBP >= 140)               # 筛选 SBP>=140
-t12 <- filter(t1, SBP >= 140, DBP >= 90)    # 两个逗号条件：同时满足
-t13 <- filter(t1, SBP >= 140 | DBP >= 90)   # 或条件：任一满足
-t14 <- filter(t1, SBP >= 140 & DBP >= 90)   # 且条件：同时满足
-t21 <- filter(t2, sex == 1)                  # 分类变量筛选：sex==1
-str(t11)                                     # 查看结果结构
-```
-
-```{r demo9-filter-solution}
-t11 <- filter(t1, SBP >= 140)               # 筛选 SBP>=140
-t12 <- filter(t1, SBP >= 140, DBP >= 90)    # 两个逗号条件：同时满足
-t13 <- filter(t1, SBP >= 140 | DBP >= 90)   # 或条件：任一满足
-t14 <- filter(t1, SBP >= 140 & DBP >= 90)   # 且条件：同时满足
-t21 <- filter(t2, sex == 1)                  # 分类变量筛选：sex==1
-str(t11)                                     # 查看结果结构
+```{r demo15-quant-solution}
+summary(tt[c("height", "weight")])  # 同时汇总身高和体重
+mean(tt$height, na.rm = TRUE)         # 计算身高均数，忽略缺失
+sd(tt$height, na.rm = TRUE)           # 计算身高标准差
+median(tt$height, na.rm = TRUE)       # 计算身高中位数
+IQR(tt$height, na.rm = TRUE)          # 计算身高四分位间距
+range(tt$height, na.rm = TRUE)        # 计算身高最小值和最大值
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习3：filter筛选
+#### 练习2：描述身高
 
-**任务：** 基于练习1的 `t1`，筛选 `SBP>=140` 或 `DBP>=90` 的样本，保存为 `t4`。
+**任务：** 基于练习1的 `tt`，计算 `height` 的均数、标准差、中位数、IQR 和范围，均忽略缺失值。
 
-```{r ex9-3-setup, include=FALSE}
-r911_replay("ex9-1")
+```{r ex15-2-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r ex9-3, exercise=TRUE}
+```{r ex15-2, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex9-3-hint}
-t4 <- filter(t1, SBP >= 140 | DBP >= 90)  # 保留满足任一血压条件的样本
-dim(t4)                                    # 查看 t4 维度
+```{r ex15-2-hint}
+mean(tt$height, na.rm = TRUE)    # 身高均数
+sd(tt$height, na.rm = TRUE)      # 身高标准差
+median(tt$height, na.rm = TRUE)  # 身高中位数
+IQR(tt$height, na.rm = TRUE)     # 身高四分位间距
+range(tt$height, na.rm = TRUE)   # 身高范围
 ```
 
-```{r ex9-3-solution}
-t4 <- filter(t1, SBP >= 140 | DBP >= 90)  # 保留满足任一血压条件的样本
-dim(t4)                                    # 查看 t4 维度
+```{r ex15-2-solution}
+mean(tt$height, na.rm = TRUE)    # 身高均数
+sd(tt$height, na.rm = TRUE)      # 身高标准差
+median(tt$height, na.rm = TRUE)  # 身高中位数
+IQR(tt$height, na.rm = TRUE)     # 身高四分位间距
+range(tt$height, na.rm = TRUE)   # 身高范围
 ```
 
-```{r ex9-3-check}
+```{r ex15-2-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 三、排列：arrange()
+### 二、分类资料的描述
 <div class="module-explain">
 
-`arrange()` 对整个数据框按变量排序。默认升序，`desc()` 指定降序；可依次给出多个变量，前一个相同再按后一个排序。
+分类变量可用 `table()` 生成频数或列联表，用 `xtabs()` 根据公式生成交叉表，用 `prop.table()` 把频数转换为比例。Word 示例关注性别、睡眠和婚姻等变量。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例4：arrange排序</div>
+<div class="module-label">示例3：分类资料描述</div>
 
-```{r demo9-arrange-setup, include=FALSE}
-r911_replay("ex9-1")
+```{r demo15-cat-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r demo9-arrange, exercise=TRUE}
-arrange(t1, SBP)                 # 按 SBP 从小到大
-arrange(t1, desc(DBP))           # 按 DBP 从大到小
-arrange(t1, SBP, DBP)            # 先按 SBP，再按 DBP，均升序
-arrange(t1, desc(DBP), SBP)      # 先按 DBP 降序，同值再按 SBP 升序
+```{r demo15-cat, exercise=TRUE}
+table(tt$sex, tt$sleep)           # 制作 sex 与 sleep 的列联表
+xtabs(~ sex + marriage, data = tt) # 用公式制作 sex 与 marriage 的列联表
+prop.table(table(tt$sex))          # 计算 sex 各类别所占比例
 ```
 
-```{r demo9-arrange-solution}
-arrange(t1, SBP)                 # 按 SBP 从小到大
-arrange(t1, desc(DBP))           # 按 DBP 从大到小
-arrange(t1, SBP, DBP)            # 先按 SBP，再按 DBP，均升序
-arrange(t1, desc(DBP), SBP)      # 先按 DBP 降序，同值再按 SBP 升序
+```{r demo15-cat-solution}
+table(tt$sex, tt$sleep)           # 制作 sex 与 sleep 的列联表
+xtabs(~ sex + marriage, data = tt) # 用公式制作 sex 与 marriage 的列联表
+prop.table(table(tt$sex))          # 计算 sex 各类别所占比例
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习4：arrange排序
+#### 练习3：分类变量频数与比例
 
-**任务：** 基于练习1的 `t1`，按 `SBP` 升序、同值时按 `DBP` 升序，结果保存为 `t5`。
+**任务：** 基于练习1的 `tt`，计算 `sex` 的频数与比例，并制作 `sex` 与 `sleep` 的列联表。
 
-```{r ex9-4-setup, include=FALSE}
-r911_replay("ex9-1")
+```{r ex15-3-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r ex9-4, exercise=TRUE}
+```{r ex15-3, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex9-4-hint}
-t5 <- arrange(t1, SBP, DBP)  # 先按 SBP，再按 DBP 升序排列
-head(t5)                       # 查看排序后前 6 行
+```{r ex15-3-hint}
+table(tt$sex)                    # 统计 sex 各类别频数
+prop.table(table(tt$sex))        # 计算 sex 各类别比例
+table(tt$sex, tt$sleep)          # 制作 sex 与 sleep 列联表
 ```
 
-```{r ex9-4-solution}
-t5 <- arrange(t1, SBP, DBP)  # 先按 SBP，再按 DBP 升序排列
-head(t5)                       # 查看排序后前 6 行
+```{r ex15-3-solution}
+table(tt$sex)                    # 统计 sex 各类别频数
+prop.table(table(tt$sex))        # 计算 sex 各类别比例
+table(tt$sex, tt$sleep)          # 制作 sex 与 sleep 列联表
 ```
 
-```{r ex9-4-check}
+```{r ex15-3-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 四、选择：select()
+### 三、dplyr包在统计描述中的应用
 <div class="module-explain">
 
-`select()` 按变量名选择列，也提供辅助选择器。Word 示例包括：`starts_with()` 按开头匹配、负号排除变量、`contains()` 按包含字符匹配、`everything()` 把其余变量接在指定变量后面。
+`dplyr` 中常用 `group_by()` 分组，`summarise()` 汇总。Word 列出可在汇总中使用的 `mean()`、`median()`、`max()`、`min()`、`sd()`、`IQR()`，以及 `first()`、`last()`、`nth()`、`n()`、`n_distinct()`。`n()` 相当于计算组内样本数，`n_distinct()` 计算不同取值数。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例5：select选择变量</div>
+<div class="module-label">示例4：分组统计描述</div>
 
-```{r demo9-select-setup, include=FALSE}
-r911_replay("ex9-1")
+```{r demo15-dplyr-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r demo9-select, exercise=TRUE}
-t15 <- select(t1, starts_with("D"))  # 选择名称以 D 开头的变量
-t16 <- select(t1, -DBP, -SBP)        # 排除 DBP 和 SBP
-t17 <- select(t1, contains("D"))     # 选择名称中包含 D 的变量
-t18 <- select(t1, DBP, everything()) # 把 DBP 调到第一列，其余变量保持
-```
+```{r demo15-dplyr, exercise=TRUE}
+library(dplyr)  # 加载 dplyr
 
-```{r demo9-select-solution}
-t15 <- select(t1, starts_with("D"))  # 选择名称以 D 开头的变量
-t16 <- select(t1, -DBP, -SBP)        # 排除 DBP 和 SBP
-t17 <- select(t1, contains("D"))     # 选择名称中包含 D 的变量
-t18 <- select(t1, DBP, everything()) # 把 DBP 调到第一列，其余变量保持
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习5：select选择变量
-
-**任务：** 基于练习1的 `t1`，选择 `SBP`、`DBP` 两列并保存为 `t6`。
-
-```{r ex9-5-setup, include=FALSE}
-r911_replay("ex9-1")
-```
-
-```{r ex9-5, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex9-5-hint}
-t6 <- select(t1, SBP, DBP)  # 只选择 SBP 和 DBP
-str(t6)                       # 查看 t6 结构
-```
-
-```{r ex9-5-solution}
-t6 <- select(t1, SBP, DBP)  # 只选择 SBP 和 DBP
-str(t6)                       # 查看 t6 结构
-```
-
-```{r ex9-5-check}
-gradethis::grade_code()
-```
-
-</div>
-### 五、变形：mutate()
-<div class="module-explain">
-
-`mutate()` 对已有列运算并新增或修改列，是数据转换的核心函数。可以一次生成多个变量。Word 还列出可在 `mutate()` 中使用的一批函数：`log()/log2()/log10()`、`lead()/lag()`、`cume_dist()`、`ntile()`、累计函数 `cumsum()/cummean()/cummin()/cummax()/cumany()/cumall()`、`na_if()`、`coalesce()`、`if_else()`、`recode()`、`case_when()`。这些函数不逐一新增练习，但保留知识清单。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例6：mutate新增变量</div>
-
-```{r demo9-mutate-setup, include=FALSE}
-r911_replay("ex9-1")
-```
-
-```{r demo9-mutate, exercise=TRUE}
-t19 <- mutate(t1, bmi = weight / height^2 * 10000)  # 根据身高体重计算 BMI
-t110 <- mutate(t1, x1 = weight * 2, x2 = height / 100) # 一次新增两个变量
-t111 <- mutate(t19, lgbmi = log(bmi))                # 对 BMI 取自然对数
-head(t19)                                            # 查看 BMI 结果
-```
-
-```{r demo9-mutate-solution}
-t19 <- mutate(t1, bmi = weight / height^2 * 10000)  # 根据身高体重计算 BMI
-t110 <- mutate(t1, x1 = weight * 2, x2 = height / 100) # 一次新增两个变量
-t111 <- mutate(t19, lgbmi = log(bmi))                # 对 BMI 取自然对数
-head(t19)                                            # 查看 BMI 结果
-```
-
-</div>
-<div class="module-example">
-
-```{r demo9-recode-setup, include=FALSE}
-r911_replay("ex9-1")
-```
-
-```{r demo9-recode, exercise=TRUE}
-t2$income <- factor(t2$income)  # 将 income 转成因子
-t2 <- mutate(
-  t2,
-  income1 = recode(income, "1" = 1, "2" = 1, "3" = 2, "4" = 2,
-                   "5" = 2, "6" = 3, "7" = 3, "8" = 3)  # 8类重分为3类
+summarise(
+  tt,
+  mean_height = mean(height, na.rm = TRUE),       # 全体身高均数
+  sd_height = sd(height, na.rm = TRUE),           # 全体身高标准差
+  median_height = median(height, na.rm = TRUE)    # 全体身高中位数
 )
-is.factor(t2$income1)           # 检查 recode 后是否已经是因子
-t2$income1 <- factor(t2$income1) # 如需要，显式转换为因子
-table(t2$income1)               # 查看各组频数
-```
 
-```{r demo9-recode-solution}
-t2$income <- factor(t2$income)  # 将 income 转成因子
-t2 <- mutate(
-  t2,
-  income1 = recode(income, "1" = 1, "2" = 1, "3" = 2, "4" = 2,
-                   "5" = 2, "6" = 3, "7" = 3, "8" = 3)  # 8类重分为3类
-)
-is.factor(t2$income1)           # 检查 recode 后是否已经是因子
-t2$income1 <- factor(t2$income1) # 如需要，显式转换为因子
-table(t2$income1)               # 查看各组频数
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习6：mutate计算BMI
-
-**任务：** 基于练习1的 `t1`，用 `mutate()` 添加 BMI 变量并保存为 `t7`。
-
-```{r ex9-6-setup, include=FALSE}
-r911_replay("ex9-1")
-```
-
-```{r ex9-6, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex9-6-hint}
-t7 <- mutate(t1, bmi = weight / height^2 * 10000)  # 计算 BMI 并生成新数据框 t7
-head(t7)                                             # 查看前 6 行
-```
-
-```{r ex9-6-solution}
-t7 <- mutate(t1, bmi = weight / height^2 * 10000)  # 计算 BMI 并生成新数据框 t7
-head(t7)                                             # 查看前 6 行
-```
-
-```{r ex9-6-check}
-gradethis::grade_code()
-```
-
-</div>
-### 六、dplyr其它重要函数
-<div class="module-explain">
-
-Word 还提示 `summarise()`、`rename()`、`sample()`、`transmute()` 等函数很有用，但没有展开实例。因此本课程保留其用途提示，不额外扩写超出原教程的语法：`summarise()` 做汇总，`rename()` 重命名，抽样函数用于重新抽样，`transmute()` 在转换后只保留指定结果列。
-
-</div>
-<div class="copy-area">
-
-### 第9讲：练习参考代码
-
-```{r r911-copy-server-9, context="server", include=FALSE}
-observeEvent(input$r911_copy_9, {
-  code <- c(
-    "# 练习1：加载包并导入数据",
-    "library(dplyr)  # 加载 dplyr",
-    "t1 <- read.csv(\"elder1.csv\")  # 导入 elder1",
-    "t2 <- read.csv(\"elder2.csv\")  # 导入 elder2",
-    "",
-    "# 练习2：inner_join",
-    "t3 <- inner_join(t1, t2, by = \"ID\")  # 按ID内连接",
-    "dim(t3)  # 查看维度",
-    "",
-    "# 练习3：filter",
-    "t4 <- filter(t1, SBP >= 140 | DBP >= 90)  # 条件筛选",
-    "dim(t4)  # 查看维度",
-    "",
-    "# 练习4：arrange",
-    "t5 <- arrange(t1, SBP, DBP)  # 两变量升序",
-    "head(t5)  # 查看前6行",
-    "",
-    "# 练习5：select",
-    "t6 <- select(t1, SBP, DBP)  # 选择两列",
-    "str(t6)  # 查看结构",
-    "",
-    "# 练习6：mutate",
-    "t7 <- mutate(t1, bmi = weight / height^2 * 10000)  # 计算BMI",
-    "head(t7)  # 查看结果"
+tt %>%
+  group_by(sex) %>%                                # 按 sex 分组
+  summarise(
+    n = n(),                                       # 每组人数
+    mean_height = mean(height, na.rm = TRUE),      # 每组身高均数
+    sd_height = sd(height, na.rm = TRUE),          # 每组身高标准差
+    median_height = median(height, na.rm = TRUE)   # 每组身高中位数
   )
-  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
-  output$r911_copy_status_9 <- renderText("已复制本讲练习参考代码。")
-})
 ```
 
-```{r r911-copy-button-9, echo=FALSE}
-actionButton("r911_copy_9", "复制本讲练习参考代码")
-br()
-textOutput("r911_copy_status_9")
-```
+```{r demo15-dplyr-solution}
+library(dplyr)  # 加载 dplyr
 
-</div>
-
-## 第10讲 tidyr包：R语言数据整理又一利器
-### 讲前准备
-<div class="module-explain">
-
-`tidyr` 主要处理宽数据、长数据，以及字符串列的合并与拆分。Word 本讲使用手工创建的 `df1`，不依赖外部文件。教程沿用 Word 当时的 `gather()` / `spread()` 写法，以保持和原教程一致。
-
-</div>
-```{r static10-install, eval=FALSE, echo=TRUE}
-install.packages("tidyr")  # 首次使用时安装 tidyr
-library(tidyr)              # 加载 tidyr 包
-```
-### 引言
-<div class="module-explain">
-
-医学随访数据常有宽、长两种结构。宽数据通常一个研究对象占一行，不同时间点放在不同列；长数据通常一个研究对象可占多行，用单独的时间变量标识测量时点。Word 用3个人治疗前及治疗后3个时点的收缩压演示转换。
-
-</div>
-### 一、宽数据转为长数据：gather()
-<div class="module-explain">
-
-`gather(data, key, value, ...)` 中，`key` 保存原来的重复测量列名，`value` 保存这些列对应的数值，`...` 指定需要收集的列。`na.rm` 可决定是否去除缺失。
-
-</div>
-<div class="module-example">
-<div class="module-label">示例1：创建宽数据</div>
-
-```{r demo10-paired-1, exercise=TRUE}
-library(tidyr)  # 加载 tidyr 包
-df1 <- data.frame(
-  name = c("郑", "陈", "毛"),       # 研究对象姓名
-  t0 = c(170, 135, 145),            # 治疗前 SBP
-  t1 = c(160, 140, 137),            # 治疗后1周 SBP
-  t2 = c(156, 133, 140),            # 治疗后2周 SBP
-  t3 = c(160, 140, 120)             # 治疗后3周 SBP
+summarise(
+  tt,
+  mean_height = mean(height, na.rm = TRUE),       # 全体身高均数
+  sd_height = sd(height, na.rm = TRUE),           # 全体身高标准差
+  median_height = median(height, na.rm = TRUE)    # 全体身高中位数
 )
-df1                                  # 查看宽数据
-```
 
-```{r demo10-paired-1-solution}
-library(tidyr)  # 加载 tidyr 包
-df1 <- data.frame(
-  name = c("郑", "陈", "毛"),       # 研究对象姓名
-  t0 = c(170, 135, 145),            # 治疗前 SBP
-  t1 = c(160, 140, 137),            # 治疗后1周 SBP
-  t2 = c(156, 133, 140),            # 治疗后2周 SBP
-  t3 = c(160, 140, 120)             # 治疗后3周 SBP
-)
-df1                                  # 查看宽数据
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习1：创建宽数据
-
-**任务：** 加载 `tidyr`，按 Word 示例创建宽数据 `df1`。
-
-```{r ex10-1, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex10-1-hint}
-library(tidyr)  # 加载 tidyr 包
-df1 <- data.frame(
-  name = c("郑", "陈", "毛"),       # 研究对象姓名
-  t0 = c(170, 135, 145),            # 治疗前 SBP
-  t1 = c(160, 140, 137),            # 治疗后1周 SBP
-  t2 = c(156, 133, 140),            # 治疗后2周 SBP
-  t3 = c(160, 140, 120)             # 治疗后3周 SBP
-)
-df1                                  # 查看宽数据
-```
-
-```{r ex10-1-solution}
-library(tidyr)  # 加载 tidyr 包
-df1 <- data.frame(
-  name = c("郑", "陈", "毛"),       # 研究对象姓名
-  t0 = c(170, 135, 145),            # 治疗前 SBP
-  t1 = c(160, 140, 137),            # 治疗后1周 SBP
-  t2 = c(156, 133, 140),            # 治疗后2周 SBP
-  t3 = c(160, 140, 120)             # 治疗后3周 SBP
-)
-df1                                  # 查看宽数据
-```
-
-```{r ex10-1-check}
-gradethis::grade_code()
-```
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例2：gather宽转长</div>
-
-```{r demo10-gather-setup, include=FALSE}
-r911_replay("ex10-1")
-```
-
-```{r demo10-gather, exercise=TRUE}
-df2 <- gather(df1, time, SBP, t0, t1, t2, t3)  # 将4个时间点列收集为 time 和 SBP
-df2                                             # 查看长数据
-```
-
-```{r demo10-gather-solution}
-df2 <- gather(df1, time, SBP, t0, t1, t2, t3)  # 将4个时间点列收集为 time 和 SBP
-df2                                             # 查看长数据
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习2：宽转长
-
-**任务：** 基于练习1实际创建的 `df1`，用 `gather()` 转成长数据 `df2`，新变量名为 `time` 与 `SBP`。
-
-```{r ex10-2-setup, include=FALSE}
-r911_replay("ex10-1")
-```
-
-```{r ex10-2, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex10-2-hint}
-df2 <- gather(df1, time, SBP, t0, t1, t2, t3)  # 宽数据转成长数据
-df2                                             # 查看 df2
-```
-
-```{r ex10-2-solution}
-df2 <- gather(df1, time, SBP, t0, t1, t2, t3)  # 宽数据转成长数据
-df2                                             # 查看 df2
-```
-
-```{r ex10-2-check}
-gradethis::grade_code()
-```
-
-</div>
-### 二、长数据转为宽数据：spread()
-<div class="module-explain">
-
-`spread(data, key, value, fill=NA)` 与 `gather()` 方向相反：`key` 的不同取值展开为多列，`value` 提供这些列中的数值；`fill` 可以指定转换后缺失单元格的填充值。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例3：spread长转宽</div>
-
-```{r demo10-spread-setup, include=FALSE}
-r911_replay(c("ex10-1", "ex10-2"))
-```
-
-```{r demo10-spread, exercise=TRUE}
-df3 <- spread(df2, time, SBP, fill = NA)  # 把 time 水平重新展开成 t0-t3 列
-df3                                    # 查看恢复的宽数据
-```
-
-```{r demo10-spread-solution}
-df3 <- spread(df2, time, SBP, fill = NA)  # 把 time 水平重新展开成 t0-t3 列
-df3                                    # 查看恢复的宽数据
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习3：长转宽
-
-**任务：** 基于练习2实际生成的 `df2`，用 `spread()` 转回宽数据 `df3`。
-
-```{r ex10-3-setup, include=FALSE}
-r911_replay(c("ex10-1", "ex10-2"))
-```
-
-```{r ex10-3, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex10-3-hint}
-df3 <- spread(df2, time, SBP, fill = NA)  # 长数据转回宽数据
-df3                                    # 查看 df3
-```
-
-```{r ex10-3-solution}
-df3 <- spread(df2, time, SBP, fill = NA)  # 长数据转回宽数据
-df3                                    # 查看 df3
-```
-
-```{r ex10-3-check}
-gradethis::grade_code()
-```
-
-</div>
-### 三、合并：unite()
-<div class="module-explain">
-
-Word 目录中写作“unit()”，正文及实际函数均为 `unite()`。`unite(data, col, ..., sep="_", remove=TRUE)` 把多列组合成一列；`col` 是新列名，`sep` 是连接符，`remove` 决定是否删除原列。互动代码使用真实函数名 `unite()`。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例4：unite合并列</div>
-
-```{r demo10-unite-setup, include=FALSE}
-r911_replay(c("ex10-1", "ex10-2", "ex10-3"))
-```
-
-```{r demo10-unite, exercise=TRUE}
-df4 <- unite(df3, namet0, name, t0, sep = "_", remove = FALSE)  # 合并 name 与 t0，并保留原列
-df4                                                        # 查看合并结果
-```
-
-```{r demo10-unite-solution}
-df4 <- unite(df3, namet0, name, t0, sep = "_", remove = FALSE)  # 合并 name 与 t0，并保留原列
-df4                                                        # 查看合并结果
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习4：合并两列
-
-**任务：** 基于练习3实际生成的 `df3`，把 `name` 与 `t0` 合并为 `namet0`，连接符为 `_`，保留原列，结果保存为 `df4`。
-
-```{r ex10-4-setup, include=FALSE}
-r911_replay(c("ex10-1", "ex10-2", "ex10-3"))
-```
-
-```{r ex10-4, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex10-4-hint}
-df4 <- unite(df3, namet0, name, t0, sep = "_", remove = FALSE)  # 合并 name 和 t0
-df4                                                        # 查看 df4
-```
-
-```{r ex10-4-solution}
-df4 <- unite(df3, namet0, name, t0, sep = "_", remove = FALSE)  # 合并 name 和 t0
-df4                                                        # 查看 df4
-```
-
-```{r ex10-4-check}
-gradethis::grade_code()
-```
-
-</div>
-### 四、拆分：separate()
-<div class="module-explain">
-
-`separate()` 与 `unite()` 相反，把一列按照分隔符拆成多列。`col` 指原列，`into` 指新列名，`sep` 指分隔符，`remove` 决定是否移除原列。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例5：separate拆列</div>
-
-```{r demo10-separate-setup, include=FALSE}
-r911_replay(c("ex10-1", "ex10-2", "ex10-3", "ex10-4"))
-```
-
-```{r demo10-separate, exercise=TRUE}
-df5 <- separate(df4, namet0, c("name1", "t01"), sep = "_", remove = TRUE)  # 按下划线拆成两列
-df5                                                               # 查看拆分结果
-```
-
-```{r demo10-separate-solution}
-df5 <- separate(df4, namet0, c("name1", "t01"), sep = "_", remove = TRUE)  # 按下划线拆成两列
-df5                                                               # 查看拆分结果
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习5：拆分列
-
-**任务：** 基于练习4实际生成的 `df4`，把 `namet0` 拆为 `name1`、`t01`，保存为 `df5`。
-
-```{r ex10-5-setup, include=FALSE}
-r911_replay(c("ex10-1", "ex10-2", "ex10-3", "ex10-4"))
-```
-
-```{r ex10-5, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex10-5-hint}
-df5 <- separate(df4, namet0, c("name1", "t01"), sep = "_", remove = TRUE)  # 拆分 namet0
-df5                                                               # 查看 df5
-```
-
-```{r ex10-5-solution}
-df5 <- separate(df4, namet0, c("name1", "t01"), sep = "_", remove = TRUE)  # 拆分 namet0
-df5                                                               # 查看 df5
-```
-
-```{r ex10-5-check}
-gradethis::grade_code()
-```
-
-</div>
-<div class="copy-area">
-
-### 第10讲：练习参考代码
-
-```{r r911-copy-server-10, context="server", include=FALSE}
-observeEvent(input$r911_copy_10, {
-  code <- c(
-    "# 练习1：创建宽数据",
-    "library(tidyr)  # 加载 tidyr",
-    "df1 <- data.frame(",
-    "  name = c(\"郑\", \"陈\", \"毛\"),  # 姓名",
-    "  t0 = c(170,135,145),  # 治疗前",
-    "  t1 = c(160,140,137),  # 治疗后1周",
-    "  t2 = c(156,133,140),  # 治疗后2周",
-    "  t3 = c(160,140,120)  # 治疗后3周",
-    ")",
-    "",
-    "# 练习2：宽转长",
-    "df2 <- gather(df1, time, SBP, t0, t1, t2, t3)  # 收集时间列",
-    "",
-    "# 练习3：长转宽",
-    "df3 <- spread(df2, time, SBP, fill = NA)  # 展开time",
-    "",
-    "# 练习4：合并列",
-    "df4 <- unite(df3, namet0, name, t0, sep = \"_\", remove = FALSE)  # 合并name和t0",
-    "",
-    "# 练习5：拆分列",
-    "df5 <- separate(df4, namet0, c(\"name1\", \"t01\"), sep = \"_\", remove = TRUE)  # 拆分namet0"
+tt %>%
+  group_by(sex) %>%                                # 按 sex 分组
+  summarise(
+    n = n(),                                       # 每组人数
+    mean_height = mean(height, na.rm = TRUE),      # 每组身高均数
+    sd_height = sd(height, na.rm = TRUE),          # 每组身高标准差
+    median_height = median(height, na.rm = TRUE)   # 每组身高中位数
   )
-  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
-  output$r911_copy_status_10 <- renderText("已复制本讲练习参考代码。")
-})
-```
-
-```{r r911-copy-button-10, echo=FALSE}
-actionButton("r911_copy_10", "复制本讲练习参考代码")
-br()
-textOutput("r911_copy_status_10")
-```
-
-</div>
-
-## 第11讲 管道符的使用
-### 引言
-<div class="module-explain">
-
-当同一数据连续经历筛选、选择、排序、新增变量、汇总等步骤时，嵌套函数会由内向外阅读，中间变量又容易冗长。管道把前一步输出自动传给下一步，让代码按数据处理顺序从左向右阅读。
-
-</div>
-### 一、为什么需要管道函数
-<div class="module-explain">
-
-Word 比较了两种传统写法：`sqrt(mean(c(...)))` 的嵌套式，以及连续创建 `data1/data2/data3` 的中间变量式。管道的核心思想是把前一个函数的输出作为后一个函数的输入。
-
-</div>
-```{r static11-before-pipe, eval=FALSE, echo=TRUE}
-sqrt(mean(c(1, 2, 3, 4, 5)))  # 嵌套式：由内向外阅读
-
-data1 <- filter(t1, age >= 60)        # 第一步：筛选
-data2 <- select(data1, age, sex)      # 第二步：选择变量
-data3 <- arrange(data2, desc(age))    # 第三步：排序
-```
-### 二、管道函数的理论基础
-<div class="module-explain">
-
-数学上的函数复合 `g(f(x))`，可用管道写成 `x %>% f() %>% g()`。R 中常见两类管道：
-
-- `%>%`：来自 `magrittr`，支持占位符 `.`，与 tidyverse 配合广泛；
-- `|>`：R 4.1.0 起的原生管道，无需加载包。
-
-对 `x %>% f(y)`，可理解为 `f(x, y)`，即左侧对象默认放到右侧函数的第一个参数。
-
-</div>
-<div class="module-example">
-
-```{r demo11-equivalence, exercise=TRUE}
-library(magrittr)                         # 加载 %>% 所在的 magrittr 包
-mean(c(1, 2, 3, 4, 5))                   # 传统函数写法
-c(1, 2, 3, 4, 5) %>% mean()              # 管道写法：把向量传入 mean()
-```
-
-```{r demo11-equivalence-solution}
-library(magrittr)                         # 加载 %>% 所在的 magrittr 包
-mean(c(1, 2, 3, 4, 5))                   # 传统函数写法
-c(1, 2, 3, 4, 5) %>% mean()              # 管道写法：把向量传入 mean()
-```
-
-</div>
-### 三、管道函数的基本用法
-<div class="module-explain">
-
-管道链按顺序执行。下面先生成向量，计算均值，再对均值开平方。Word 同时给出 `%>%` 和原生 `|>` 两种写法。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例1：均值后开平方</div>
-
-```{r demo11-basic, exercise=TRUE}
-library(magrittr)                         # 加载 %>%
-result <- c(1, 2, 3, 4, 5) %>%            # 生成向量并送入下一步
-  mean() %>%                               # 计算均值
-  sqrt()                                   # 对均值开平方
-result                                     # 查看结果
-
-result2 <- c(1, 2, 3, 4, 5) |>            # 原生管道，无需 magrittr
-  mean() |>                                # 计算均值
-  sqrt()                                   # 开平方
-result2                                    # 查看原生管道结果
-```
-
-```{r demo11-basic-solution}
-library(magrittr)                         # 加载 %>%
-result <- c(1, 2, 3, 4, 5) %>%            # 生成向量并送入下一步
-  mean() %>%                               # 计算均值
-  sqrt()                                   # 对均值开平方
-result                                     # 查看结果
-
-result2 <- c(1, 2, 3, 4, 5) |>            # 原生管道，无需 magrittr
-  mean() |>                                # 计算均值
-  sqrt()                                   # 开平方
-result2                                    # 查看原生管道结果
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习1：基础管道
+#### 练习4：按性别分组描述
 
-**任务：** 加载 `magrittr`，用 `%>%` 对 `c(1,2,3,4,5)` 依次求均值和平方根，保存为 `result1`。
+**任务：** 基于练习1的 `tt`，用 `dplyr` 按 `sex` 分组，计算人数、身高均数和标准差。
 
-```{r ex11-1, exercise=TRUE}
+```{r ex15-4-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r ex15-4, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex11-1-hint}
-library(magrittr)                         # 加载 %>%
-result1 <- c(1, 2, 3, 4, 5) %>%           # 生成向量
-  mean() %>%                               # 求均值
-  sqrt()                                   # 对均值开平方
-result1                                    # 输出结果
+```{r ex15-4-hint}
+library(dplyr)  # 加载 dplyr
+tt %>%
+  group_by(sex) %>%                               # 按 sex 分组
+  summarise(
+    n = n(),                                      # 计算每组人数
+    mean_height = mean(height, na.rm = TRUE),     # 计算每组身高均数
+    sd_height = sd(height, na.rm = TRUE)          # 计算每组身高标准差
+  )
 ```
 
-```{r ex11-1-solution}
-library(magrittr)                         # 加载 %>%
-result1 <- c(1, 2, 3, 4, 5) %>%           # 生成向量
-  mean() %>%                               # 求均值
-  sqrt()                                   # 对均值开平方
-result1                                    # 输出结果
+```{r ex15-4-solution}
+library(dplyr)  # 加载 dplyr
+tt %>%
+  group_by(sex) %>%                               # 按 sex 分组
+  summarise(
+    n = n(),                                      # 计算每组人数
+    mean_height = mean(height, na.rm = TRUE),     # 计算每组身高均数
+    sd_height = sd(height, na.rm = TRUE)          # 计算每组身高标准差
+  )
 ```
 
-```{r ex11-1-check}
+```{r ex15-4-check}
 gradethis::grade_code()
 ```
 
 </div>
-#### 数据处理流程
+### 四、gmodels包在交叉表中的应用
 <div class="module-explain">
 
-在 `dplyr` 中，管道常把一个数据框依次传给 `filter()`、`select()`、`arrange()` 等函数。Word 示例使用 `age`、`sex`，用于说明代码结构；课程数据中是否存在相同变量，应以实际文件为准。
+Word 使用 `gmodels::CrossTable()` 同时给出交叉频数与行、列百分比。该函数来自 `gmodels` 扩展包。
 
 </div>
-```{r static11-data-pipe, eval=FALSE, echo=TRUE}
-data <- t1 %>%
-  filter(age >= 60) %>%       # 筛选年龄大于等于60岁
-  select(age, sex) %>%        # 只保留 age 和 sex
-  arrange(desc(age))          # 按 age 降序排列
-str(data)                     # 查看结果结构
+```{r static15-gmodels-install, eval=FALSE, echo=TRUE}
+install.packages("gmodels")  # 首次使用时安装 gmodels
+library(gmodels)              # 加载 gmodels
 ```
 <div class="module-example">
-<div class="module-label">示例2：dplyr管道流程</div>
 
-```{r demo11-paired-2-setup, include=FALSE}
-r911_prepare_workdir()
+<div class="module-label">示例5：CrossTable交叉表</div>
+
+```{r demo15-cross-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r demo11-paired-2, exercise=TRUE}
-library(dplyr)                            # 加载 dplyr
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result2 <- t1 %>%                           # 从 t1 开始处理
-  filter(SBP >= 140) %>%                    # 筛选 SBP>=140
-  select(SBP, DBP) %>%                      # 选择 SBP、DBP
-  arrange(desc(SBP))                        # 按 SBP 降序
-head(result2)                               # 查看前 6 行
+```{r demo15-cross, exercise=TRUE}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 计算 sex 与 sleep 的交叉表及百分比
+x                                        # 查看交叉表结果
 ```
 
-```{r demo11-paired-2-solution}
-library(dplyr)                            # 加载 dplyr
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result2 <- t1 %>%                           # 从 t1 开始处理
-  filter(SBP >= 140) %>%                    # 筛选 SBP>=140
-  select(SBP, DBP) %>%                      # 选择 SBP、DBP
-  arrange(desc(SBP))                        # 按 SBP 降序
-head(result2)                               # 查看前 6 行
+```{r demo15-cross-solution}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 计算 sex 与 sleep 的交叉表及百分比
+x                                        # 查看交叉表结果
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习2：dplyr管道流程
+#### 练习5：CrossTable
 
-**任务：** 读取 `elder1.csv` 为 `t1`，用管道筛选 `SBP>=140`，选择 `SBP`、`DBP`，再按 `SBP` 降序，保存为 `result2`。
+**任务：** 基于练习1的 `tt`，加载 `gmodels`，用 `CrossTable()` 分析 `sex` 与 `sleep`。
 
-```{r ex11-2-setup, include=FALSE}
-r911_prepare_workdir()
+```{r ex15-5-setup, include=FALSE}
+r1517_replay("ex15-1")
 ```
 
-```{r ex11-2, exercise=TRUE}
+```{r ex15-5, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex11-2-hint}
-library(dplyr)                            # 加载 dplyr
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result2 <- t1 %>%                           # 从 t1 开始处理
-  filter(SBP >= 140) %>%                    # 筛选 SBP>=140
-  select(SBP, DBP) %>%                      # 选择 SBP、DBP
-  arrange(desc(SBP))                        # 按 SBP 降序
-head(result2)                               # 查看前 6 行
+```{r ex15-5-hint}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 生成交叉表并计算百分比
+x                                        # 查看结果
 ```
 
-```{r ex11-2-solution}
-library(dplyr)                            # 加载 dplyr
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result2 <- t1 %>%                           # 从 t1 开始处理
-  filter(SBP >= 140) %>%                    # 筛选 SBP>=140
-  select(SBP, DBP) %>%                      # 选择 SBP、DBP
-  arrange(desc(SBP))                        # 按 SBP 降序
-head(result2)                               # 查看前 6 行
+```{r ex15-5-solution}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 生成交叉表并计算百分比
+x                                        # 查看结果
 ```
 
-```{r ex11-2-check}
+```{r ex15-5-check}
 gradethis::grade_code()
 ```
-
-</div>
-### 四、管道函数的高级用法：占位符 .
-<div class="module-explain">
-
-当左侧对象不是右侧函数的第一个参数，或需要在右侧出现多次时，`%>%` 可用 `.` 指定插入位置。Word 用 `lm(..., data=.)` 演示把管道结果传给 `data` 参数。
-
-</div>
-```{r static11-placeholder, eval=FALSE, echo=TRUE}
-t1 %>%
-  subset(sex == 1) %>%            # 先筛选 sex==1 的样本
-  lm(lungfun ~ PA, data = .)      # 把上一步数据作为 lm() 的 data 参数
-
-# 等价的非管道写法
-lm(lungfun ~ PA, data = subset(t1, sex == 1))
-```
-<div class="module-example">
-<div class="module-label">示例3：占位符提取列</div>
-
-```{r demo11-paired-3-setup, include=FALSE}
-r911_prepare_workdir()
-```
-
-```{r demo11-paired-3, exercise=TRUE}
-library(magrittr)                         # 加载 %>%
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result3 <- t1 %>%                          # 把数据框送入下一步
-  .$SBP %>%                                # 用占位符提取 SBP 向量
-  mean(na.rm = TRUE)                       # 计算 SBP 均值并忽略缺失
-result3                                    # 查看均值
-```
-
-```{r demo11-paired-3-solution}
-library(magrittr)                         # 加载 %>%
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result3 <- t1 %>%                          # 把数据框送入下一步
-  .$SBP %>%                                # 用占位符提取 SBP 向量
-  mean(na.rm = TRUE)                       # 计算 SBP 均值并忽略缺失
-result3                                    # 查看均值
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习3：占位符提取列
-
-**任务：** 读取 `elder1.csv` 为 `t1`，用 `%>%` 和 `.$SBP` 提取 `SBP` 向量，再计算均值（忽略缺失），保存为 `result3`。
-
-```{r ex11-3-setup, include=FALSE}
-r911_prepare_workdir()
-```
-
-```{r ex11-3, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex11-3-hint}
-library(magrittr)                         # 加载 %>%
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result3 <- t1 %>%                          # 把数据框送入下一步
-  .$SBP %>%                                # 用占位符提取 SBP 向量
-  mean(na.rm = TRUE)                       # 计算 SBP 均值并忽略缺失
-result3                                    # 查看均值
-```
-
-```{r ex11-3-solution}
-library(magrittr)                         # 加载 %>%
-t1 <- read.csv("elder1.csv")              # 导入 elder1
-result3 <- t1 %>%                          # 把数据框送入下一步
-  .$SBP %>%                                # 用占位符提取 SBP 向量
-  mean(na.rm = TRUE)                       # 计算 SBP 均值并忽略缺失
-result3                                    # 查看均值
-```
-
-```{r ex11-3-check}
-gradethis::grade_code()
-```
-
-</div>
-### 五、综合案例：一长串管道代码
-<div class="module-explain">
-
-Word 用一条长管道演示“排除变量 → 筛选高血压或糖尿病 → 计算 BMI → 提取 BMI → `cut()` 分类 → `table()` 计数”。该示例中的 `cardio_metabolic`、`hypertension`、`diabetes` 来自示例背景，并不保证存在于本课程的 elder 数据，所以作为静态综合阅读，不设置成必须运行的练习。
-
-</div>
-```{r static11-long-pipe, eval=FALSE, echo=TRUE}
-t1 %>%
-  select(-cardio_metabolic) %>%                         # 排除 cardio_metabolic 列
-  filter(hypertension == 1 | diabetes == 1) %>%         # 保留高血压或糖尿病样本
-  mutate(bmi = weight / (height / 100)^2) %>%           # 计算 BMI
-  .$bmi %>%                                             # 提取 bmi 向量
-  cut(breaks = c(-Inf, 18.5, 24, 28, Inf), labels = FALSE) %>% # 将 BMI 分4类
-  table()                                               # 统计各类别人数
-```
-### 六、管道函数的注意事项
-<div class="module-explain">
-
-Word 强调：管道不是任何时候都更好。只有一步时直接函数可能更清楚；管道太长会增加调试难度，可拆段检查。`%>%` 的 `.` 占位符只在右侧表达式中起作用；原生 `|>` 不支持 magrittr 的 `.` 占位符及 `%$%` 等特有操作。
-
-</div>
-### 七、小结
-<div class="module-summary">
-
-管道的主要价值是提高从左到右的可读性、减少中间变量，并把数据处理步骤组织成清晰流程。传统写法更接近函数嵌套；管道写法更接近“数据流水线”。复杂链条仍应注意分段调试。
 
 </div>
 <div class="copy-area">
 
-### 第11讲：练习参考代码
+### 第15讲：练习参考代码
 
-```{r r911-copy-server-11, context="server", include=FALSE}
-observeEvent(input$r911_copy_11, {
+```{r r1517-copy-server-15, context="server", include=FALSE}
+observeEvent(input$r1517_copy_15, {
   code <- c(
-    "# 练习1：基础管道",
-    "library(magrittr)  # 加载%>%",
-    "result1 <- c(1, 2, 3, 4, 5) %>%  # 输入向量",
-    "  mean() %>%  # 求均值",
-    "  sqrt()  # 开平方",
-    "result1  # 输出结果",
+    "# 练习1：导入并合并",
+    "t1 <- read.csv(\"elder1.csv\")  # 导入elder1",
+    "t2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "tt <- merge(t1, t2, by = \"ID\")  # 按ID合并",
     "",
-    "# 练习2：dplyr管道",
+    "# 练习2：定量描述",
+    "mean(tt$height, na.rm = TRUE)  # 均数",
+    "sd(tt$height, na.rm = TRUE)  # 标准差",
+    "median(tt$height, na.rm = TRUE)  # 中位数",
+    "IQR(tt$height, na.rm = TRUE)  # 四分位间距",
+    "range(tt$height, na.rm = TRUE)  # 范围",
+    "",
+    "# 练习3：分类描述",
+    "table(tt$sex)  # sex频数",
+    "prop.table(table(tt$sex))  # sex比例",
+    "table(tt$sex, tt$sleep)  # 交叉表",
+    "",
+    "# 练习4：dplyr分组描述",
     "library(dplyr)  # 加载dplyr",
-    "t1 <- read.csv(\"elder1.csv\")  # 导入数据",
-    "result2 <- t1 %>%  # 开始管道",
-    "  filter(SBP >= 140) %>%  # 条件筛选",
-    "  select(SBP, DBP) %>%  # 选择两列",
-    "  arrange(desc(SBP))  # SBP降序",
-    "head(result2)  # 查看结果",
+    "tt %>% group_by(sex) %>% summarise(n=n(), mean_height=mean(height,na.rm=TRUE), sd_height=sd(height,na.rm=TRUE))  # 分组汇总",
     "",
-    "# 练习3：占位符",
-    "library(magrittr)  # 加载%>%",
-    "t1 <- read.csv(\"elder1.csv\")  # 导入数据",
-    "result3 <- t1 %>%  # 开始管道",
-    "  .$SBP %>%  # 提取SBP",
-    "  mean(na.rm = TRUE)  # 计算均值",
-    "result3  # 输出结果"
+    "# 练习5：CrossTable",
+    "library(gmodels)  # 加载gmodels",
+    "x <- CrossTable(tt$sex, tt$sleep)  # 交叉表",
+    "x  # 查看结果"
   )
   clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
-  output$r911_copy_status_11 <- renderText("已复制本讲练习参考代码。")
+  output$r1517_copy_status_15 <- renderText("已复制本讲练习参考代码。")
 })
 ```
 
-```{r r911-copy-button-11, echo=FALSE}
-actionButton("r911_copy_11", "复制本讲练习参考代码")
+```{r r1517-copy-button-15, echo=FALSE}
+actionButton("r1517_copy_15", "复制本讲练习参考代码")
 br()
-textOutput("r911_copy_status_11")
+textOutput("r1517_copy_status_15")
 ```
 
 </div>
 
-## 数据清洗和整理总结
-### 一、数值变量数据转为分类变量数据
+## 第16讲 apply族函数的应用
+### 引言
 <div class="module-explain">
 
-Word 在第11讲后把前面分散的变量转换方法集中复习。正式内容包括条件赋值、`ifelse()` 与 `cut()`；循环和自编函数明确标注为自学，因此不纳入主体。
+apply 族函数可以把同一个函数批量作用到数据对象的多个行、列、元素或分组上，减少重复代码。Word 依次介绍 `apply()`、`lapply()`、`sapply()`、`tapply()`、`mapply()`，最后给出医学数据中的批量类型检查、因子化、分组描述和缺失值统计。
 
 </div>
-```{r static-clean-numcat, eval=FALSE, echo=TRUE}
-t1 <- read.csv("elder1.csv")  # 读取 elder1
-t2 <- read.csv("elder2.csv")  # 读取 elder2
+### 一、函数 apply()
+<div class="module-explain">
 
-# 方法一：ifelse() 做简单二分类
-t1$SBP1 <- ifelse(t1$SBP >= 140, 1, 0)  # SBP>=140编码1，否则0
+基本格式为 `apply(x, MARGIN, FUN, ...)`。`MARGIN=1` 表示按行，`MARGIN=2` 表示按列；`FUN` 是要重复执行的函数。常用于矩阵或二维数据的行列汇总。
 
-# 方法二：条件赋值做多分类
-t1$income2[t1$income >= 5] <- 3                   # income>=5 编码3
-t1$income2[t1$income < 5 & t1$income >= 3] <- 2  # 3<=income<5 编码2
-t1$income2[t1$income < 3] <- 1                    # income<3 编码1
+</div>
+<div class="module-example">
 
-# 方法三：cut() 按截点分类
-t1$SBP2 <- cut(t1$SBP, breaks = c(-Inf, 90, 140, 160, Inf), labels = FALSE) # 按截点分组
+<div class="module-label">示例1：按行和按列求均值</div>
+
+```{r demo16-apply, exercise=TRUE}
+x <- matrix(1:6, ncol = 2)  # 创建 3 行 2 列矩阵
+x                             # 查看矩阵
+apply(x, 1, mean)             # 对每一行计算均值
+apply(x, 2, mean)             # 对每一列计算均值
 ```
-### 二、分类变量数据因子化和转换
-<div class="module-explain">
 
-数值编码的分类变量在导入后常被识别为 numeric，需要用 `factor()` 或 `as.factor()` 因子化。多列可用 `lapply()` 批量转换。`dplyr::recode()` 可重编码，`recode_factor()` 可直接形成因子。Word 仅建议有兴趣者学习 `forcats`，这里不扩展。
+```{r demo16-apply-solution}
+x <- matrix(1:6, ncol = 2)  # 创建 3 行 2 列矩阵
+x                             # 查看矩阵
+apply(x, 1, mean)             # 对每一行计算均值
+apply(x, 2, mean)             # 对每一列计算均值
+```
 
 </div>
-```{r static-clean-factor, eval=FALSE, echo=TRUE}
-is.numeric(t2$sex)                         # 判断 sex 是否为数值型
-is.factor(t2$sex)                          # 判断 sex 是否为因子
-t2$sex <- factor(t2$sex)                   # 将 sex 转为因子
-is.factor(t2$sex)                          # 再次检查
+<div class="module-exercise">
+
+#### 练习1：apply按行列计算
+
+**任务：** 创建矩阵 `x <- matrix(1:6,ncol=2)`，分别用 `apply()` 计算各行和各列均值。
+
+```{r ex16-1, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-1-hint}
+x <- matrix(1:6, ncol = 2)  # 创建矩阵
+apply(x, 1, mean)             # 按行计算均值
+apply(x, 2, mean)             # 按列计算均值
+```
+
+```{r ex16-1-solution}
+x <- matrix(1:6, ncol = 2)  # 创建矩阵
+apply(x, 1, mean)             # 按行计算均值
+apply(x, 2, mean)             # 按列计算均值
+```
+
+```{r ex16-1-check}
+gradethis::grade_code()
+```
+
+</div>
+### 二、函数 lapply()
+<div class="module-explain">
+
+`lapply(x, FUN, ...)` 对列表、数据框或向量的每个元素应用函数，结果总是列表。数据框在 R 中本质上也是一种列表，因此很适合逐列处理。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例2：对数据框每列处理</div>
+
+```{r demo16-lapply, exercise=TRUE}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 第一列数值
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 第二列数值
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 第三列数值
+)
+lapply(d1, mean)                 # 对每列计算均值，返回列表
+lapply(d1, factor)               # 把每列转换为因子，返回列表
+```
+
+```{r demo16-lapply-solution}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 第一列数值
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 第二列数值
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 第三列数值
+)
+lapply(d1, mean)                 # 对每列计算均值，返回列表
+lapply(d1, factor)               # 把每列转换为因子，返回列表
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习2：lapply计算列均值
+
+**任务：** 按 Word 示例创建 `d1`，用 `lapply()` 计算每列均值，保存为 `t1`。
+
+```{r ex16-2, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-2-hint}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 创建 x1
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 创建 x2
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 创建 x3
+)
+t1 <- lapply(d1, mean)          # 对每列计算均值并返回列表
+t1                              # 查看结果
+```
+
+```{r ex16-2-solution}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 创建 x1
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 创建 x2
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 创建 x3
+)
+t1 <- lapply(d1, mean)          # 对每列计算均值并返回列表
+t1                              # 查看结果
+```
+
+```{r ex16-2-check}
+gradethis::grade_code()
+```
+
+</div>
+### 三、函数 sapply()
+<div class="module-explain">
+
+`sapply()` 与 `lapply()` 类似，但默认会尝试把结果简化为向量或矩阵。`simplify=FALSE` 时行为接近 `lapply()`；默认 `TRUE` 时，如果每个结果长度为1，通常简化为向量。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例3：sapply简化结果</div>
+
+```{r demo16-sapply-setup, include=FALSE}
+r1517_replay("ex16-2")
+```
+
+```{r demo16-sapply, exercise=TRUE}
+sapply(d1, mean)        # 每列均值，通常简化为数值向量
+sapply(d1, factor)      # 对每列因子化，结果按可简化形式返回
+sapply(d1, sd)          # 每列标准差
+sapply(d1, is.numeric)  # 判断每列是否为数值型
+```
+
+```{r demo16-sapply-solution}
+sapply(d1, mean)        # 每列均值，通常简化为数值向量
+sapply(d1, factor)      # 对每列因子化，结果按可简化形式返回
+sapply(d1, sd)          # 每列标准差
+sapply(d1, is.numeric)  # 判断每列是否为数值型
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习3：sapply批量统计
+
+**任务：** 基于练习2实际创建的 `d1`，分别用 `sapply()` 计算每列标准差并判断是否为数值型。
+
+```{r ex16-3-setup, include=FALSE}
+r1517_replay("ex16-2")
+```
+
+```{r ex16-3, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-3-hint}
+sapply(d1, sd)          # 计算各列标准差
+sapply(d1, is.numeric)  # 判断各列是否为数值型
+```
+
+```{r ex16-3-solution}
+sapply(d1, sd)          # 计算各列标准差
+sapply(d1, is.numeric)  # 判断各列是否为数值型
+```
+
+```{r ex16-3-check}
+gradethis::grade_code()
+```
+
+</div>
+### 四、函数 tapply()
+<div class="module-explain">
+
+`tapply(x, INDEX, FUN, ...)` 根据一个或多个分组因子，对向量分组后应用函数。`x` 是待分析向量，`INDEX` 是与其等长的分组变量。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例4：分组计算身高均值</div>
+
+```{r demo16-tapply, exercise=TRUE}
+height <- c(174, 165, 180, 171, 160)  # 创建身高向量
+sex <- c("F", "F", "M", "M", "F")     # 创建性别分组
+tapply(height, sex, mean)                 # 按 sex 分组计算身高均值
+```
+
+```{r demo16-tapply-solution}
+height <- c(174, 165, 180, 171, 160)  # 创建身高向量
+sex <- c("F", "F", "M", "M", "F")     # 创建性别分组
+tapply(height, sex, mean)                 # 按 sex 分组计算身高均值
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习4：tapply分组均值
+
+**任务：** 创建 Word 中的 `height` 和 `sex`，使用 `tapply()` 按性别计算身高均值。
+
+```{r ex16-4, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-4-hint}
+height <- c(174, 165, 180, 171, 160)  # 身高向量
+sex <- c("F", "F", "M", "M", "F")     # 性别分组
+tapply(height, sex, mean)                 # 分组计算均值
+```
+
+```{r ex16-4-solution}
+height <- c(174, 165, 180, 171, 160)  # 身高向量
+sex <- c("F", "F", "M", "M", "F")     # 性别分组
+tapply(height, sex, mean)                 # 分组计算均值
+```
+
+```{r ex16-4-check}
+gradethis::grade_code()
+```
+
+</div>
+### 五、函数 mapply()
+<div class="module-explain">
+
+`mapply()` 是 `sapply()` 的多参数版本，可以把多个参数位置同步送入同一个函数。`MoreArgs` 用于传入对每次调用都相同的额外参数。Word 用 `rep()` 演示不同重复次数。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例5：mapply多参数调用</div>
+
+```{r demo16-mapply, exercise=TRUE}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))       # 分别重复1、2、3次，结果长度不同
+mapply(rep, times = c(2, 2), MoreArgs = list(x = 1:2)) # 两次调用结果等长，可简化为矩阵
+```
+
+```{r demo16-mapply-solution}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))       # 分别重复1、2、3次，结果长度不同
+mapply(rep, times = c(2, 2), MoreArgs = list(x = 1:2)) # 两次调用结果等长，可简化为矩阵
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习5：mapply重复向量
+
+**任务：** 用 `mapply()` 将 `1:2` 分别重复1次、2次、3次。
+
+```{r ex16-5, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-5-hint}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))  # 对相同向量使用不同重复次数
+```
+
+```{r ex16-5-solution}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))  # 对相同向量使用不同重复次数
+```
+
+```{r ex16-5-check}
+gradethis::grade_code()
+```
+
+</div>
+### 六、医学数据分析中apply族的应用
+<div class="module-explain">
+
+Word 给出四类实际用途：
+
+1. `sapply(t1, class)` 批量查看变量类型；
+2. `sapply(t1, is.numeric)` 批量判断是否数值型；
+3. `lapply()` 把多个分类变量批量因子化；
+4. `tapply()` 分组求均值或计数；
+5. 自编缺失值计数函数再与 `apply()` 联用。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例6：批量处理医学数据</div>
+
+```{r demo16-medical-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r demo16-medical, exercise=TRUE}
+t1 <- read.csv("elder1.csv")  # 导入 elder1
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+
+sapply(t1, class)              # 批量查看每列类型
+sapply(t1, is.numeric)         # 批量判断每列是否数值型
 
 vars <- c("sex", "marriage", "education", "huji", "income", "smoking") # 指定分类变量
-t2[vars] <- lapply(t2[vars], factor)        # 批量因子化
+t2[vars] <- lapply(t2[vars], factor)  # 批量把指定变量转为因子
 
-library(dplyr)                             # 加载 dplyr
-t2$income <- factor(t2$income)             # 先把 income 因子化
-t22 <- mutate(t2, income1 = recode(income, "1"=1, "2"=1, "3"=2, "4"=2, "5"=2, "6"=3, "7"=3, "8"=3)) # 重编码
-t22$income1 <- as.factor(t22$income1)       # 把 recode 结果转为因子
-t2$income4 <- recode_factor(t2$income, "1"=1, "2"=1, "3"=2, "4"=2, "5"=2, "6"=3, "7"=3, "8"=3) # 直接生成因子
+tapply(t2$health, t2$sex, mean, na.rm = TRUE)  # 按 sex 计算 health 均值
+tapply(t2$marriage, t2$sex, table)              # 按 sex 分组统计 marriage
 ```
+
+```{r demo16-medical-solution}
+t1 <- read.csv("elder1.csv")  # 导入 elder1
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+
+sapply(t1, class)              # 批量查看每列类型
+sapply(t1, is.numeric)         # 批量判断每列是否数值型
+
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking") # 指定分类变量
+t2[vars] <- lapply(t2[vars], factor)  # 批量把指定变量转为因子
+
+tapply(t2$health, t2$sex, mean, na.rm = TRUE)  # 按 sex 计算 health 均值
+tapply(t2$marriage, t2$sex, table)              # 按 sex 分组统计 marriage
+```
+
+</div>
+<div class="module-example">
+
+```{r demo16-nafun-setup, include=FALSE}
+r1517_prepare_workdir()
+t1 <- read.csv("elder1.csv")
+```
+
+```{r demo16-nafun, exercise=TRUE}
+naf <- function(x) {            # 定义计算缺失数量的函数
+  nas <- sum(is.na(x))           # 统计 x 中 NA 数量
+  return(nas)                    # 返回缺失数量
+}
+apply(t1, 2, naf)                # 对 t1 每一列应用 naf()
+```
+
+```{r demo16-nafun-solution}
+naf <- function(x) {            # 定义计算缺失数量的函数
+  nas <- sum(is.na(x))           # 统计 x 中 NA 数量
+  return(nas)                    # 返回缺失数量
+}
+apply(t1, 2, naf)                # 对 t1 每一列应用 naf()
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习6：批量因子化
+
+**任务：** 导入 `elder2.csv` 为 `t2`，把 `sex`、`marriage`、`education`、`huji`、`income`、`smoking` 用 `lapply()` 批量转为因子，并检查类型。
+
+```{r ex16-6-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r ex16-6, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-6-hint}
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking")  # 指定变量名
+t2[vars] <- lapply(t2[vars], factor)  # 批量因子化
+sapply(t2[vars], is.factor)           # 检查这些变量是否均为因子
+```
+
+```{r ex16-6-solution}
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking")  # 指定变量名
+t2[vars] <- lapply(t2[vars], factor)  # 批量因子化
+sapply(t2[vars], is.factor)           # 检查这些变量是否均为因子
+```
+
+```{r ex16-6-check}
+gradethis::grade_code()
+```
+
+</div>
+<div class="copy-area">
+
+### 第16讲：练习参考代码
+
+```{r r1517-copy-server-16, context="server", include=FALSE}
+observeEvent(input$r1517_copy_16, {
+  code <- c(
+    "# 练习1：apply",
+    "x <- matrix(1:6, ncol=2)  # 创建矩阵",
+    "apply(x,1,mean)  # 按行均值",
+    "apply(x,2,mean)  # 按列均值",
+    "",
+    "# 练习2：lapply",
+    "d1 <- data.frame(x1=c(5.1,4.9,4.7,4.6), x2=c(3.5,3.0,3.2,3.1), x3=c(1.4,1.4,1.3,1.5))  # 创建数据框",
+    "t1 <- lapply(d1, mean)  # 每列均值",
+    "t1  # 查看结果",
+    "",
+    "# 练习3：sapply",
+    "sapply(d1, sd)  # 每列标准差",
+    "sapply(d1, is.numeric)  # 判断数值型",
+    "",
+    "# 练习4：tapply",
+    "height <- c(174,165,180,171,160)  # 身高",
+    "sex <- c(\"F\",\"F\",\"M\",\"M\",\"F\")  # 性别",
+    "tapply(height,sex,mean)  # 分组均值",
+    "",
+    "# 练习5：mapply",
+    "mapply(rep,times=1:3,MoreArgs=list(x=1:2))  # 不同重复次数",
+    "",
+    "# 练习6：批量因子化",
+    "t2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "vars <- c(\"sex\",\"marriage\",\"education\",\"huji\",\"income\",\"smoking\")  # 指定变量",
+    "t2[vars] <- lapply(t2[vars], factor)  # 批量因子化",
+    "sapply(t2[vars], is.factor)  # 检查因子"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r1517_copy_status_16 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r1517-copy-button-16, echo=FALSE}
+actionButton("r1517_copy_16", "复制本讲练习参考代码")
+br()
+textOutput("r1517_copy_status_16")
+```
+
+</div>
+
+## 第17讲 如何使用R语言进行假设检验
+### 引言
+<div class="module-explain">
+
+假设检验是统计推断的重要组成。Word 本讲依次介绍正态性检验、方差齐性检验、t检验、方差分析、卡方检验和秩和检验。选择检验方法前，应结合变量类型、分布、独立/配对设计和方差情况判断。
+
+</div>
+### 讲前准备
+<div class="module-example">
+<div class="module-label">示例1：导入并合并数据</div>
+
+```{r demo17-paired-1-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r demo17-paired-1, exercise=TRUE}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+```{r demo17-paired-1-solution}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习1：导入并合并数据
+
+**任务：** 导入 `elder1.csv`、`elder2.csv`，按 `ID` 合并为 `tt`，只保留共同ID。
+
+```{r ex17-1-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r ex17-1, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-1-hint}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+```{r ex17-1-solution}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+```{r ex17-1-check}
+gradethis::grade_code()
+```
+
+</div>
+### 一、正态性检验
+<div class="module-explain">
+
+Word 给出三种方法：小样本的 `shapiro.test()`、大样本的 Kolmogorov-Smirnov `ks.test()`、以及 `nortest` 包中的 `lillie.test()`。正态性检验结果不应只机械看 P 值，也应结合样本量和图形判断；本课程此处按 Word 讲代码用法。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例2：三种正态性检验</div>
+
+```{r demo17-normal-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-normal, exercise=TRUE}
+shapiro.test(tt$weight)       # Shapiro-Wilk 正态性检验
+ks.test(tt$weight, "pnorm")   # K-S 正态性检验（按 Word 写法）
+
+library(nortest)              # 加载 nortest 包
+lillie.test(tt$weight)         # Lilliefors 修正检验
+```
+
+```{r demo17-normal-solution}
+shapiro.test(tt$weight)       # Shapiro-Wilk 正态性检验
+ks.test(tt$weight, "pnorm")   # K-S 正态性检验（按 Word 写法）
+
+library(nortest)              # 加载 nortest 包
+lillie.test(tt$weight)         # Lilliefors 修正检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习2：正态性检验
+
+**任务：** 基于练习1的 `tt`，对 `weight` 做 Shapiro-Wilk 正态性检验。
+
+```{r ex17-2-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-2, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-2-hint}
+shapiro.test(tt$weight)  # 检验 weight 的正态性
+```
+
+```{r ex17-2-solution}
+shapiro.test(tt$weight)  # 检验 weight 的正态性
+```
+
+```{r ex17-2-check}
+gradethis::grade_code()
+```
+
+</div>
+### 二、方差齐性检验
+<div class="module-explain">
+
+两组或多组定量资料比较时，还需要考虑方差齐性。Word 给出 `var.test()` 和 `bartlett.test()`。原文在 `bartlett.test()` 前加载 `car`，但 `bartlett.test()` 本身来自 R 的 `stats` 包；课程保留 Word 的方法，同时互动代码直接调用该函数。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例3：方差齐性检验</div>
+
+```{r demo17-var-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-var, exercise=TRUE}
+var.test(height ~ sex, data = tt)       # 两组方差比较
+bartlett.test(height ~ sex, data = tt)  # Bartlett 方差齐性检验
+```
+
+```{r demo17-var-solution}
+var.test(height ~ sex, data = tt)       # 两组方差比较
+bartlett.test(height ~ sex, data = tt)  # Bartlett 方差齐性检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习3：方差齐性检验
+
+**任务：** 基于练习1的 `tt`，用 `var.test()` 比较不同 `sex` 组的 `height` 方差。
+
+```{r ex17-3-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-3, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-3-hint}
+var.test(height ~ sex, data = tt)  # 检验两组 height 方差是否相同
+```
+
+```{r ex17-3-solution}
+var.test(height ~ sex, data = tt)  # 检验两组 height 方差是否相同
+```
+
+```{r ex17-3-check}
+gradethis::grade_code()
+```
+
+</div>
+### 三、t检验
+<div class="module-explain">
+
+`t.test()` 可用于单样本、两独立样本和配对样本。Word 说明：`alternative` 可设置双侧/大于/小于，`mu` 是原假设中的比较值，`paired` 指是否配对，`var.equal` 指是否假定方差齐，`conf.level` 指置信水平。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例4：三类t检验</div>
+
+```{r demo17-t-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-t, exercise=TRUE}
+t.test(tt$weight, mu = 65, alternative = "less")   # 单样本 t 检验：均值是否小于65
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE) # 两独立样本 t 检验
+t.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)         # 配对 t 检验
+```
+
+```{r demo17-t-solution}
+t.test(tt$weight, mu = 65, alternative = "less")   # 单样本 t 检验：均值是否小于65
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE) # 两独立样本 t 检验
+t.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)         # 配对 t 检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习4：两独立样本t检验
+
+**任务：** 基于练习1的 `tt`，比较不同 `sex` 组的 `weight`，不假定方差齐。
+
+```{r ex17-4-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-4, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-4-hint}
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE)  # 两独立样本 t 检验
+```
+
+```{r ex17-4-solution}
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE)  # 两独立样本 t 检验
+```
+
+```{r ex17-4-check}
+gradethis::grade_code()
+```
+
+</div>
+### 四、方差分析
+<div class="module-explain">
+
+`aov()` 使用公式描述因变量和分组因素。单因素方差分析可用 `TukeyHSD()` 做 Word 示例中的两两比较；双因素可写 `因变量 ~ 因子1 + 因子2`，若研究交互效应则可用 `*`。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例5：单因素和双因素方差分析</div>
+
+```{r demo17-aov-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-aov, exercise=TRUE}
+tt$marriage <- as.factor(tt$marriage)  # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt) # 单因素方差分析
+summary(fit)                             # 查看总体方差分析结果
+TukeyHSD(fit)                            # Tukey 两两比较
+
+tt$huji <- as.factor(tt$huji)            # 将 huji 转为因子
+fit1 <- aov(weight ~ marriage + huji, data = tt) # 双因素方差分析
+summary(fit1)                            # 查看双因素分析结果
+```
+
+```{r demo17-aov-solution}
+tt$marriage <- as.factor(tt$marriage)  # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt) # 单因素方差分析
+summary(fit)                             # 查看总体方差分析结果
+TukeyHSD(fit)                            # Tukey 两两比较
+
+tt$huji <- as.factor(tt$huji)            # 将 huji 转为因子
+fit1 <- aov(weight ~ marriage + huji, data = tt) # 双因素方差分析
+summary(fit1)                            # 查看双因素分析结果
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习5：单因素方差分析
+
+**任务：** 基于练习1的 `tt`，把 `marriage` 转为因子，比较不同婚姻组的 `weight`，并做 Tukey 两两比较。
+
+```{r ex17-5-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-5, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-5-hint}
+tt$marriage <- as.factor(tt$marriage)   # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt)  # 单因素方差分析
+summary(fit)                              # 查看方差分析结果
+TukeyHSD(fit)                             # 进行两两比较
+```
+
+```{r ex17-5-solution}
+tt$marriage <- as.factor(tt$marriage)   # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt)  # 单因素方差分析
+summary(fit)                              # 查看方差分析结果
+TukeyHSD(fit)                             # 进行两两比较
+```
+
+```{r ex17-5-check}
+gradethis::grade_code()
+```
+
+</div>
+### 五、卡方检验
+<div class="module-explain">
+
+分类变量之间可先构造列联表，再用 `chisq.test()`。Word 同时介绍提取理论频数、连续性校正、Fisher 精确检验，以及 2×2 配对资料的 McNemar 检验。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例6：卡方与Fisher/McNemar</div>
+
+```{r demo17-chi-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-chi, exercise=TRUE}
+table1 <- table(tt$sex, tt$marriage)      # 创建 sex×marriage 列联表
+chisq.test(table1)$expected                # 查看理论频数
+chisq.test(table1)                         # Pearson 卡方检验
+chisq.test(table1, correct = TRUE)         # 使用连续性校正（适用时）
+fisher.test(table1)                        # Fisher 精确检验
+
+table2 <- table(tt$sex, tt$insomnia)       # 构造2×2表（应结合实际设计判断是否配对）
+mcnemar.test(table2)                       # McNemar 配对卡方检验
+```
+
+```{r demo17-chi-solution}
+table1 <- table(tt$sex, tt$marriage)      # 创建 sex×marriage 列联表
+chisq.test(table1)$expected                # 查看理论频数
+chisq.test(table1)                         # Pearson 卡方检验
+chisq.test(table1, correct = TRUE)         # 使用连续性校正（适用时）
+fisher.test(table1)                        # Fisher 精确检验
+
+table2 <- table(tt$sex, tt$insomnia)       # 构造2×2表（应结合实际设计判断是否配对）
+mcnemar.test(table2)                       # McNemar 配对卡方检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习6：列联表卡方检验
+
+**任务：** 基于练习1的 `tt`，构造 `sex` 与 `marriage` 的列联表 `table1`，查看理论频数并完成卡方检验。
+
+```{r ex17-6-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-6, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-6-hint}
+table1 <- table(tt$sex, tt$marriage)  # 构造列联表
+chisq.test(table1)$expected            # 查看理论频数
+chisq.test(table1)                     # 进行卡方检验
+```
+
+```{r ex17-6-solution}
+table1 <- table(tt$sex, tt$marriage)  # 构造列联表
+chisq.test(table1)$expected            # 查看理论频数
+chisq.test(table1)                     # 进行卡方检验
+```
+
+```{r ex17-6-check}
+gradethis::grade_code()
+```
+
+</div>
+### 六、秩和检验
+<div class="module-explain">
+
+`wilcox.test()` 可完成单样本、两独立样本和配对的非参数检验；`paired` 指是否配对，`alternative` 指备择方向，`mu` 指比较值。多组独立样本可用 `kruskal.test()`。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例7：秩和检验</div>
+
+```{r demo17-rank-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-rank, exercise=TRUE}
+wilcox.test(tt$weight, mu = 65, alternative = "less") # 单样本符号秩检验
+wilcox.test(weight ~ sex, data = tt, mu = 0)           # 两独立样本秩和检验
+wilcox.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)       # 配对样本秩和检验
+kruskal.test(weight ~ sleep, data = tt)                 # 多组独立样本秩和检验
+```
+
+```{r demo17-rank-solution}
+wilcox.test(tt$weight, mu = 65, alternative = "less") # 单样本符号秩检验
+wilcox.test(weight ~ sex, data = tt, mu = 0)           # 两独立样本秩和检验
+wilcox.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)       # 配对样本秩和检验
+kruskal.test(weight ~ sleep, data = tt)                 # 多组独立样本秩和检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习7：两独立样本秩和检验
+
+**任务：** 基于练习1的 `tt`，用 `wilcox.test()` 比较不同 `sex` 组的 `weight`。
+
+```{r ex17-7-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-7, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-7-hint}
+wilcox.test(weight ~ sex, data = tt, mu = 0)  # 两独立样本秩和检验
+```
+
+```{r ex17-7-solution}
+wilcox.test(weight ~ sex, data = tt, mu = 0)  # 两独立样本秩和检验
+```
+
+```{r ex17-7-check}
+gradethis::grade_code()
+```
+
+</div>
+<div class="copy-area">
+
+### 第17讲：练习参考代码
+
+```{r r1517-copy-server-17, context="server", include=FALSE}
+observeEvent(input$r1517_copy_17, {
+  code <- c(
+    "# 练习1：导入并合并",
+    "t1 <- read.csv(\"elder1.csv\")  # 导入elder1",
+    "t2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "tt <- merge(t1,t2,by=\"ID\",all=FALSE)  # 合并共同ID",
+    "",
+    "# 练习2：正态性",
+    "shapiro.test(tt$weight)  # Shapiro-Wilk检验",
+    "",
+    "# 练习3：方差齐性",
+    "var.test(height ~ sex, data=tt)  # 方差比较",
+    "",
+    "# 练习4：两独立样本t检验",
+    "t.test(weight ~ sex, data=tt, mu=0, var.equal=FALSE)  # Welch t检验",
+    "",
+    "# 练习5：单因素方差分析",
+    "tt$marriage <- as.factor(tt$marriage)  # marriage因子化",
+    "fit <- aov(weight ~ marriage, data=tt)  # ANOVA",
+    "summary(fit)  # 查看结果",
+    "TukeyHSD(fit)  # 两两比较",
+    "",
+    "# 练习6：卡方检验",
+    "table1 <- table(tt$sex,tt$marriage)  # 列联表",
+    "chisq.test(table1)$expected  # 理论频数",
+    "chisq.test(table1)  # 卡方检验",
+    "",
+    "# 练习7：秩和检验",
+    "wilcox.test(weight ~ sex, data=tt, mu=0)  # 两独立样本秩和检验"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r1517_copy_status_17 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r1517-copy-button-17, echo=FALSE}
+actionButton("r1517_copy_17", "复制本讲练习参考代码")
+br()
+textOutput("r1517_copy_status_17")
+```
+
+</div>

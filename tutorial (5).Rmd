@@ -1,7 +1,7 @@
 ---
-title: "R语言基础教程（第18-20讲）"
+title: "R语言基础教程（第24-26讲）"
 tutorial:
-  id: "r-language-course-18-20"
+  id: "r-language-course-24-26"
   version: "v9"
 output:
   learnr::tutorial:
@@ -24,15 +24,15 @@ options(tutorial.storage = list(
 ))
 learnr::tutorial_options(exercise.eval = FALSE)
 gradethis::gradethis_setup()
-.r1820_live_code <- new.env(parent = emptyenv())
-r1820_session_bucket <- function(session) {
+.r2426_live_code <- new.env(parent = emptyenv())
+r2426_session_bucket <- function(session) {
   if (is.null(session) || is.null(session$token)) stop("无法识别当前 learnr 会话，请重新打开教程后再试。", call. = FALSE)
   key <- as.character(session$token)
-  if (!exists(key, envir = .r1820_live_code, inherits = FALSE)) assign(key, new.env(parent = emptyenv()), envir = .r1820_live_code)
-  get(key, envir = .r1820_live_code, inherits = FALSE)
+  if (!exists(key, envir = .r2426_live_code, inherits = FALSE)) assign(key, new.env(parent = emptyenv()), envir = .r2426_live_code)
+  get(key, envir = .r2426_live_code, inherits = FALSE)
 }
 
-r1820_extract_setwd_path <- function(code) {
+r2426_extract_setwd_path <- function(code) {
   exprs <- tryCatch(parse(text = paste(code, collapse = "\n")), error = function(e) NULL)
   if (is.null(exprs)) return(NULL)
   found <- NULL
@@ -49,45 +49,45 @@ r1820_extract_setwd_path <- function(code) {
   found
 }
 
-r1820_saved_workdir <- function() {
+r2426_saved_workdir <- function() {
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
     caller <- parent.frame()
     if (exists("session", envir = caller, inherits = TRUE)) session <- get("session", envir = caller, inherits = TRUE)
   }
-  bucket <- r1820_session_bucket(session)
-  if (!exists(".r1820_workdir", envir = bucket, inherits = FALSE)) {
+  bucket <- r2426_session_bucket(session)
+  if (!exists(".r2426_workdir", envir = bucket, inherits = FALSE)) {
     stop("请先运行本文件开头的‘设置工作空间’示例，把 setwd() 改为你自己的课程数据文件夹并点击 Run Code。", call. = FALSE)
   }
-  get(".r1820_workdir", envir = bucket, inherits = FALSE)
+  get(".r2426_workdir", envir = bucket, inherits = FALSE)
 }
 
-r1820_is_absolute_path <- function(path) {
+r2426_is_absolute_path <- function(path) {
   is.character(path) && length(path) == 1L && grepl("^(?:[A-Za-z]:[/\\]|/|~[/\\]?)", path)
 }
-r1820_resolve_path <- function(path, workdir = r1820_saved_workdir()) {
+r2426_resolve_path <- function(path, workdir = r2426_saved_workdir()) {
   if (!is.character(path) || length(path) != 1L || !nzchar(path)) return(path)
-  if (r1820_is_absolute_path(path)) return(path.expand(path))
+  if (r2426_is_absolute_path(path)) return(path.expand(path))
   file.path(workdir, path)
 }
-r1820_prepare_workdir <- function(envir = parent.frame()) {
-  workdir <- r1820_saved_workdir(); target <- envir
+r2426_prepare_workdir <- function(envir = parent.frame()) {
+  workdir <- r2426_saved_workdir(); target <- envir
   assign("getwd", local({ wd <- workdir; function() wd }), envir = target)
-  assign("read.csv", local({ wd <- workdir; function(file, ...) utils::read.csv(r1820_resolve_path(file, wd), ...) }), envir = target)
-  assign("read.table", local({ wd <- workdir; function(file, ...) utils::read.table(r1820_resolve_path(file, wd), ...) }), envir = target)
-  assign("write.csv", local({ wd <- workdir; function(x, file = "", ...) { out <- if (is.character(file) && length(file)==1L && nzchar(file)) r1820_resolve_path(file, wd) else file; utils::write.csv(x, file=out, ...) } }), envir = target)
+  assign("read.csv", local({ wd <- workdir; function(file, ...) utils::read.csv(r2426_resolve_path(file, wd), ...) }), envir = target)
+  assign("read.table", local({ wd <- workdir; function(file, ...) utils::read.table(r2426_resolve_path(file, wd), ...) }), envir = target)
+  assign("write.csv", local({ wd <- workdir; function(x, file = "", ...) { out <- if (is.character(file) && length(file)==1L && nzchar(file)) r2426_resolve_path(file, wd) else file; utils::write.csv(x, file=out, ...) } }), envir = target)
   invisible(workdir)
 }
 
-r1820_replay <- function(labels) {
+r2426_replay <- function(labels) {
   labels <- as.character(labels)
   session <- shiny::getDefaultReactiveDomain()
   if (is.null(session)) {
     caller <- parent.frame()
     if (exists("session", envir = caller, inherits = TRUE)) session <- get("session", envir = caller, inherits = TRUE)
   }
-  bucket <- r1820_session_bucket(session)
-  r1820_prepare_workdir(envir = parent.frame())
+  bucket <- r2426_session_bucket(session)
+  r2426_prepare_workdir(envir = parent.frame())
   for (label in labels) {
     if (!exists(label, envir = bucket, inherits = FALSE)) stop(sprintf("请先完成前面的代码框（%s）并点击 Run Code。", label), call. = FALSE)
     code <- paste(get(label, envir = bucket, inherits = FALSE), collapse = "\n")
@@ -98,15 +98,15 @@ r1820_replay <- function(labels) {
 }
 ```
 
-```{r r1820-track-live-code, context="server-start", include=FALSE}
+```{r r2426-track-live-code, context="server-start", include=FALSE}
 learnr::event_register_handler("exercise_result", function(session, event, data) {
   if (!is.null(data$label) && !is.null(data$code)) {
-    bucket <- r1820_session_bucket(session)
+    bucket <- r2426_session_bucket(session)
     assign(data$label, data$code, envir = bucket)
     
     # 当学生完成“设置工作空间”代码框后，记录其实际设置的目录。
-    if (identical(data$label, "r1820-prep-workdir")) {
-      wd <- r1820_extract_setwd_path(data$code)
+    if (identical(data$label, "r2426-prep-workdir")) {
+      wd <- r2426_extract_setwd_path(data$code)
 
       if (!is.null(wd) && dir.exists(path.expand(wd))) {
         wd <- normalizePath(
@@ -115,7 +115,7 @@ learnr::event_register_handler("exercise_result", function(session, event, data)
           mustWork = TRUE
         )
 
-        assign(".r1820_workdir", wd, envir = bucket)
+        assign(".r2426_workdir", wd, envir = bucket)
 
         # RMedLearn 安装包中已经内置 elder1.csv 与 elder2.csv。
         # 学生成功设置工作空间后，将这两个数据文件自动准备到该目录。
@@ -224,7 +224,7 @@ h4, .section.level4 h4 { font-size: 17px !important; font-weight: 700 !important
 .tutorialTitle::after,
 .topicsHeader .tutorialTitle::after,
 .topicsListContainer .tutorialTitle::after {
-  content: "第18–20讲";
+  content: "第24–26讲";
   display: block;
   margin-top: 6px;
   font-size: 18px;
@@ -320,1494 +320,1178 @@ h4, .section.level4 h4 { font-size: 17px !important; font-weight: 700 !important
 .section.level4 > h4::before { display: none !important; content: none !important; }
 </style>
 
-# 第18-20讲 回归与生存分析
+# 第24-26讲 R语言数据可视化
 ## 统一讲前准备
 <div class="module-explain">
 
-第18-20讲进入回归与生存分析。第18、19讲使用 `elder1.csv`、`elder2.csv`；请先在下面把 `setwd()` 改成你自己的课程工作文件夹并运行，RMedLearn 会自动把这两个 CSV 文件复制到该文件夹（若已有同名文件则不会覆盖）。第20讲使用 Word 中的 `pancer.sav`，该文件目前尚未内置，拿到数据后仍需放入同一工作文件夹。课程示例会尽量保留 Word 的建模顺序，同时把原文中明显无法运行的拼写或引号错误在文字中指出并使用可运行写法。
+第24-26讲进入绘图。第24讲和第26讲会使用 `elder1.csv`、`elder2.csv`；请先在下面把 `setwd()` 改成你自己的课程工作文件夹并运行，RMedLearn 会自动把这两个 CSV 文件复制到该文件夹（若已有同名文件则不会覆盖）。第25讲主要使用 `ggplot2` 和 `gapminder` 示例数据，第26讲还会使用 `ggpubr` 绘制更适合学术展示的图。
 
 </div>
 <div class="module-example">
 
-```{r r1820-prep-workdir, exercise=TRUE}
+```{r r2426-prep-workdir, exercise=TRUE}
 setwd("D:/R2022")  # 将路径改成你自己的课程数据文件夹
 getwd()          # 查看当前设置的工作空间
 ```
 
-```{r r1820-prep-workdir-solution}
+```{r r2426-prep-workdir-solution}
 setwd("D:/R2022")  # 将路径改成你自己的课程数据文件夹
 getwd()          # 查看当前设置的工作空间
 ```
 
 </div>
 
-## 第18讲 利用R语言进行线性回归分析
+## 第24讲 R语言绘图入门
 ### 引言
 <div class="module-explain">
 
-线性回归用来研究定量结局与一个或多个自变量的关系。Word 从简单线性回归开始，再进入多因素模型、分类自变量因子化、逐步回归、结果提取和回归诊断。
+R 可以逐步添加颜色、点、线、文字、图例等图形元素。Word 把常见绘图系统概括为基础 `base`、`lattice` 和 `ggplot2`；本课程重点学习 base 与 ggplot2。本讲先学习 R 自带的 base 绘图系统。
 
 </div>
-### 讲前准备
-```{r static18-packages, eval=FALSE, echo=TRUE}
-library(dplyr)  # 数据整理与 inner_join()
-# library(car) # 回归诊断中的 durbinWatsonTest()、vif() 需要 car 包
-```
+### 一、base绘图系统
+<div class="module-explain">
+
+Word 把基础绘图拆成三部分：**主函数、参数、辅助函数**。主函数首先创建图，参数控制外观，辅助函数在已经存在的图上继续添加元素。
+
+</div>
+#### 1. 基本绘图系统主函数
+<div class="module-explain">
+
+常见主函数包括：
+
+- `plot()`：常见散点图/通用绘图；
+- `pairs()`：散点图矩阵；
+- `hist()`：直方图；
+- `boxplot()`：箱线图；
+- `dotchart()`：点图；
+- `barplot()`：条形图；
+- `pie()`：饼图；
+- `corrgram()`：相关图（需要相应扩展包时再加载）；
+- `qqplot()` / `qqline()` / `qqnorm()`：QQ图；
+- `heatmap()`：热图。
+
+</div>
+#### 2. 主函数常用参数
+<div class="module-explain">
+
+Word 列出：`font` 字体、`lty` 线型、`lwd` 线宽、`pch` 点型、`xlab`/`ylab` 坐标标签、`xlim`/`ylim` 坐标范围、`main` 图内标题。不同主函数支持的参数略有不同，可用 `help()` 查看。
+
+</div>
+#### 3. 基本绘图系统辅助函数
+<div class="module-explain">
+
+常见辅助函数包括 `par()`（画布/图形参数）、`legend()`（图例）、`lines()`（线）、`curve()`（曲线）、`abline()`（直线）、`points()`（点）、`segments()`（线段）、`arrows()`（箭头）、`title()`（标题）、`text()`（图内文字）、`mtext()`（图框周围文字）、`grid()`（网格）、`axis()`（坐标轴）。这些函数通常在主图已经建立后继续添加元素。
+
+</div>
+### 二、基本绘图系统举例
+#### 1. 婚姻状况条形图
+<div class="module-explain">
+
+Word 先用 `table(elder2$marriage)` 汇总频数，再用 `par(mfrow=c(1,2))` 把画布分成一行两列，分别画竖直和水平条形图。
+
+</div>
 <div class="module-example">
-<div class="module-label">示例1：导入并合并分析数据</div>
 
-```{r demo18-paired-1-setup, include=FALSE}
-r1820_prepare_workdir()
+<div class="module-label">示例1：竖直与水平条形图</div>
+
+```{r demo24-bar-setup, include=FALSE}
+r2426_prepare_workdir()
 ```
 
-```{r demo18-paired-1, exercise=TRUE}
-library(dplyr)                          # 加载 dplyr
-elder1 <- read.csv("elder1.csv")        # 导入 elder1
-elder2 <- read.csv("elder2.csv")        # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID")  # 按 ID 内连接
-str(tt)                                 # 查看合并后的结构
-write.csv(tt, file = "tt.csv", row.names = FALSE) # 导出合并数据
+```{r demo24-bar, exercise=TRUE}
+elder2 <- read.csv("elder2.csv")                     # 导入 elder2
+counts <- table(elder2$marriage)                     # 汇总 marriage 各类别人数
+par(mfrow = c(1, 2))                                 # 设置一行两列画布
+barplot(counts, main = "Simple Bar Plot",            # 绘制竖直条形图
+        xlab = "marriage", ylab = "number")
+barplot(counts, main = "Horizontal Bar Plot",        # 绘制水平条形图
+        xlab = "number", ylab = "marriage",
+        horiz = TRUE)
 ```
 
-```{r demo18-paired-1-solution}
-library(dplyr)                          # 加载 dplyr
-elder1 <- read.csv("elder1.csv")        # 导入 elder1
-elder2 <- read.csv("elder2.csv")        # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID")  # 按 ID 内连接
-str(tt)                                 # 查看合并后的结构
-write.csv(tt, file = "tt.csv", row.names = FALSE) # 导出合并数据
+```{r demo24-bar-solution}
+elder2 <- read.csv("elder2.csv")                     # 导入 elder2
+counts <- table(elder2$marriage)                     # 汇总 marriage 各类别人数
+par(mfrow = c(1, 2))                                 # 设置一行两列画布
+barplot(counts, main = "Simple Bar Plot",            # 绘制竖直条形图
+        xlab = "marriage", ylab = "number")
+barplot(counts, main = "Horizontal Bar Plot",        # 绘制水平条形图
+        xlab = "number", ylab = "marriage",
+        horiz = TRUE)
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习1：导入并合并分析数据
+#### 练习1：婚姻状况条形图
 
-**任务：** 加载 `dplyr`，导入 `elder1.csv`、`elder2.csv`，按 `ID` 用 `inner_join()` 合并为 `tt`，并导出 `tt.csv`。
+**任务：** 导入 `elder2.csv`，统计 `marriage` 频数，并用 `barplot()` 分别绘制竖直和水平条形图。
 
-```{r ex18-1-setup, include=FALSE}
-r1820_prepare_workdir()
+```{r ex24-1-setup, include=FALSE}
+r2426_prepare_workdir()
 ```
 
-```{r ex18-1, exercise=TRUE}
+```{r ex24-1, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-1-hint}
-library(dplyr)                          # 加载 dplyr
-elder1 <- read.csv("elder1.csv")        # 导入 elder1
-elder2 <- read.csv("elder2.csv")        # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID")  # 按 ID 内连接
-str(tt)                                 # 查看合并后的结构
-write.csv(tt, file = "tt.csv", row.names = FALSE) # 导出合并数据
+```{r ex24-1-hint}
+elder2 <- read.csv("elder2.csv")                     # 导入 elder2
+counts <- table(elder2$marriage)                     # 统计婚姻状况频数
+par(mfrow = c(1, 2))                                 # 一行两列画布
+barplot(counts, main = "Simple Bar Plot", xlab = "marriage", ylab = "number") # 竖直条形图
+barplot(counts, main = "Horizontal Bar Plot", xlab = "number", ylab = "marriage", horiz = TRUE) # 水平条形图
 ```
 
-```{r ex18-1-solution}
-library(dplyr)                          # 加载 dplyr
-elder1 <- read.csv("elder1.csv")        # 导入 elder1
-elder2 <- read.csv("elder2.csv")        # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID")  # 按 ID 内连接
-str(tt)                                 # 查看合并后的结构
-write.csv(tt, file = "tt.csv", row.names = FALSE) # 导出合并数据
+```{r ex24-1-solution}
+elder2 <- read.csv("elder2.csv")                     # 导入 elder2
+counts <- table(elder2$marriage)                     # 统计婚姻状况频数
+par(mfrow = c(1, 2))                                 # 一行两列画布
+barplot(counts, main = "Simple Bar Plot", xlab = "marriage", ylab = "number") # 竖直条形图
+barplot(counts, main = "Horizontal Bar Plot", xlab = "number", ylab = "marriage", horiz = TRUE) # 水平条形图
 ```
 
-```{r ex18-1-check}
+```{r ex24-1-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 一、简单线性回归分析
+#### 2. 收缩压直方图
 <div class="module-explain">
 
-简单线性回归只有一个自变量。R 用 `lm(因变量 ~ 自变量)` 建模，`~` 左边是结局，右边是解释变量。`plot()` 可画散点图，`abline()` 加拟合直线，`anova()` 查看模型方差分析，`summary()` 查看回归系数等主要结果。
+Word 从简单直方图逐步加入分组数、颜色、密度曲线，再演示添加正态密度参考曲线。`freq=FALSE` 把纵轴改为密度，便于叠加密度曲线。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例2：年龄与身高的简单线性回归</div>
+<div class="module-label">示例2：SBP直方图及密度曲线</div>
 
-```{r demo18-simple, exercise=TRUE}
-age <- 8:19  # 创建年龄向量（Word 示例为 12 个连续年龄值）
-height <- c(76.1, 77, 78.1, 78.2, 78.8, 79.7, 79.9, 81.1, 81.2, 81.8, 82.8, 83.5) # 创建身高向量
-plot(age, height, main = "身高与年龄散点图")  # 绘制散点图
-lm.reg <- lm(height ~ age)                       # 建立简单线性回归模型
-abline(lm.reg)                                   # 添加拟合直线
-anova(lm.reg)                                    # 模型方差分析
-summary(lm.reg)                                  # 查看完整回归结果
+```{r demo24-hist-setup, include=FALSE}
+r2426_prepare_workdir()
 ```
 
-```{r demo18-simple-solution}
-age <- 8:19  # 创建年龄向量（Word 示例为 12 个连续年龄值）
-height <- c(76.1, 77, 78.1, 78.2, 78.8, 79.7, 79.9, 81.1, 81.2, 81.8, 82.8, 83.5) # 创建身高向量
-plot(age, height, main = "身高与年龄散点图")  # 绘制散点图
-lm.reg <- lm(height ~ age)                       # 建立简单线性回归模型
-abline(lm.reg)                                   # 添加拟合直线
-anova(lm.reg)                                    # 模型方差分析
-summary(lm.reg)                                  # 查看完整回归结果
+```{r demo24-hist, exercise=TRUE}
+elder1 <- read.csv("elder1.csv")                            # 导入 elder1
+par(mfrow = c(2, 2))                                        # 设置2×2画布
+hist(elder1$SBP)                                            # 最简单直方图
+hist(elder1$SBP, breaks = 12, col = "red",                 # 指定组数和颜色
+     xlab = "SBP", main = "SBP Distribution")
+hist(elder1$SBP, freq = FALSE, breaks = 12, col = "red",   # 以密度为纵轴
+     xlab = "SBP", main = "SBP Distribution with density curve")
+lines(density(elder1$SBP, na.rm = TRUE), col = "blue", lwd = 2) # 添加实际密度曲线
+```
+
+```{r demo24-hist-solution}
+elder1 <- read.csv("elder1.csv")                            # 导入 elder1
+par(mfrow = c(2, 2))                                        # 设置2×2画布
+hist(elder1$SBP)                                            # 最简单直方图
+hist(elder1$SBP, breaks = 12, col = "red",                 # 指定组数和颜色
+     xlab = "SBP", main = "SBP Distribution")
+hist(elder1$SBP, freq = FALSE, breaks = 12, col = "red",   # 以密度为纵轴
+     xlab = "SBP", main = "SBP Distribution with density curve")
+lines(density(elder1$SBP, na.rm = TRUE), col = "blue", lwd = 2) # 添加实际密度曲线
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习2：简单线性回归
+#### 练习2：SBP直方图和密度曲线
 
-**任务：** 按 Word 数据创建 `age`、`height`，建立 `height~age` 的模型 `lm.reg1`，查看 `summary()`。
+**任务：** 导入 `elder1.csv`，绘制 `SBP` 的密度直方图，并叠加核密度曲线。
 
-```{r ex18-2, exercise=TRUE}
+```{r ex24-2-setup, include=FALSE}
+r2426_prepare_workdir()
+```
+
+```{r ex24-2, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-2-hint}
-age <- 8:19  # 创建年龄
-height <- c(76.1, 77, 78.1, 78.2, 78.8, 79.7, 79.9, 81.1, 81.2, 81.8, 82.8, 83.5) # 创建身高
-lm.reg1 <- lm(height ~ age)  # 建立简单线性回归
-summary(lm.reg1)             # 查看回归系数、R方等结果
+```{r ex24-2-hint}
+elder1 <- read.csv("elder1.csv")                          # 导入 elder1
+hist(elder1$SBP, freq = FALSE, breaks = 12,               # 绘制密度直方图
+     xlab = "SBP", main = "SBP Distribution with density curve")
+lines(density(elder1$SBP, na.rm = TRUE), lwd = 2)         # 添加核密度曲线
 ```
 
-```{r ex18-2-solution}
-age <- 8:19  # 创建年龄
-height <- c(76.1, 77, 78.1, 78.2, 78.8, 79.7, 79.9, 81.1, 81.2, 81.8, 82.8, 83.5) # 创建身高
-lm.reg1 <- lm(height ~ age)  # 建立简单线性回归
-summary(lm.reg1)             # 查看回归系数、R方等结果
+```{r ex24-2-solution}
+elder1 <- read.csv("elder1.csv")                          # 导入 elder1
+hist(elder1$SBP, freq = FALSE, breaks = 12,               # 绘制密度直方图
+     xlab = "SBP", main = "SBP Distribution with density curve")
+lines(density(elder1$SBP, na.rm = TRUE), lwd = 2)         # 添加核密度曲线
 ```
 
-```{r ex18-2-check}
+```{r ex24-2-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 二、多因素线性回归分析
+#### 3. ROC曲线
 <div class="module-explain">
 
-多因素线性回归仍使用 `lm()`，多个自变量用 `+` 连接。Word 先根据身高体重生成 BMI，再用 `health` 作为定量结局，把 `SBP`、`DBP`、`TC`、`sugar`、`bmi`、`TG` 作为定量自变量。
+Word 还使用前面 logistic 回归章节产生的 `tt1` 与 `glm.step` 计算预测概率，再用 `pROC::roc()` 和 `plot()` 绘制 ROC 曲线。由于这两个模型对象不是本绘图文件独立产生的，下面保留为静态复习代码，不设置必须运行的练习。
 
 </div>
+```{r static24-roc, eval=FALSE, echo=TRUE}
+par(mfrow = c(1, 1))  # 恢复单图画布
+tt1$premodel <- predict(glm.step, newdata = tt1, type = "response") # 计算个体预测概率
+library(pROC)  # 加载 pROC
+rocline <- roc(insomnia1 ~ premodel, data = tt1, smooth = FALSE)    # 计算 ROC
+plot(rocline, print.auc = TRUE, print.thres = TRUE, main = "ROC CURVE", legacy.axes = TRUE) # 绘制ROC并显示AUC
+```
+<div class="copy-area">
+
+### 第24讲：练习参考代码
+
+```{r r2426-copy-server-24, context="server", include=FALSE}
+observeEvent(input$r2426_copy_24, {
+  code <- c(
+    "# 练习1：条形图",
+    "elder2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "counts <- table(elder2$marriage)  # marriage频数",
+    "par(mfrow=c(1,2))  # 一行两列",
+    "barplot(counts,main=\"Simple Bar Plot\",xlab=\"marriage\",ylab=\"number\")  # 竖直条形图",
+    "barplot(counts,main=\"Horizontal Bar Plot\",xlab=\"number\",ylab=\"marriage\",horiz=TRUE)  # 水平条形图",
+    "",
+    "# 练习2：直方图",
+    "elder1 <- read.csv(\"elder1.csv\")  # 导入elder1",
+    "hist(elder1$SBP,freq=FALSE,breaks=12,xlab=\"SBP\",main=\"SBP Distribution with density curve\")  # 密度直方图",
+    "lines(density(elder1$SBP,na.rm=TRUE),lwd=2)  # 添加密度曲线"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r2426_copy_status_24 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r2426-copy-button-24, echo=FALSE}
+actionButton("r2426_copy_24", "复制本讲练习参考代码")
+br()
+textOutput("r2426_copy_status_24")
+```
+
+</div>
+
+## 第25讲 ggplot2包
+### 引言
+<div class="module-explain">
+
+`ggplot2` 实现“图形的语法”：把绘图任务拆分成数据、映射、几何对象、标度、分面、主题等图层，再用 `+` 逐层叠加。常用图只需先 `ggplot()` 指定数据和映射，再加 `geom_xxx()` 指定图形类型；需要时继续增加其他图层。
+
+</div>
+### 一、ggplot2图层与基本语法
+<div class="module-explain">
+
+Word 总结八类元素：
+
+1. **data**：待可视化的数据；
+2. **aes**：变量到图形特征的映射；
+3. **geom**：几何对象，如点、线、条形；
+4. **stats**：统计变换；
+5. **scale**：颜色、形状、大小、坐标刻度等映射规则；
+6. **facet**：按分类变量拆分小图；
+7. **theme**：与数据无关的主题外观；
+8. **annotate**：文字等注释。
+
+常见几何对象包括 `geom_point()`、`geom_bar()`、`geom_line()`、`geom_histogram()`、`geom_boxplot()`、`geom_density()`。`facet_grid()` 可按行列变量分面，`theme()` 用于标题、坐标、图例、网格背景等细节。
+
+</div>
+<div class="module-explain">
+
+Word 给出的通用流程是：准备长表型数据 → 加载包 → `ggplot()` 指定数据和 `aes()` 映射 → 添加 `geom_xxx()` → 必要时加坐标/标度 → 用 `labs()` 加标题和标签。抽象模板可写作：
+
+`ggplot(data, aes(...)) + geom_xxx(...) + scale_xxx(...) + coord_xxx(...) + labs(...)`
+
+</div>
+### 二、gapminder数据与最基本散点图
+<div class="module-explain">
+
+Word 使用 `gapminder` 扩展包中的数据：变量包括国家 `country`、洲 `continent`、年份 `year`、期望寿命 `lifeExp`、人口 `pop`、人均 GDP `gdpPercap`。散点图把人均 GDP 映射到 x 轴、期望寿命映射到 y 轴。
+
+</div>
+```{r static25-install, eval=FALSE, echo=TRUE}
+install.packages("ggplot2")    # 首次使用时安装 ggplot2
+install.packages("gapminder")  # 首次使用时安装 gapminder
+library(ggplot2)               # 加载 ggplot2
+library(gapminder)             # 加载 gapminder 示例数据
+```
 <div class="module-example">
+<div class="module-label">示例1：建立ggplot基础画布</div>
 
-<div class="module-label">示例3：定量自变量多因素回归</div>
-
-```{r demo18-multi-num-setup, include=FALSE}
-r1820_replay("ex18-1")
+```{r demo25-paired-1, exercise=TRUE}
+library(ggplot2)                         # 加载 ggplot2
+library(gapminder)                       # 加载 gapminder 数据
+head(gapminder, 6)                       # 查看前6行
+p1 <- ggplot(gapminder, aes(gdpPercap, lifeExp)) # 指定数据与x/y映射
+p1                                       # 显示只有坐标系统的基础画布
 ```
 
-```{r demo18-multi-num, exercise=TRUE}
-library(dplyr)                                            # 加载 dplyr
-tt <- mutate(tt, bmi = weight / height^2 * 10000)         # 计算 BMI
-lm.reg <- lm(health ~ SBP + DBP + TC + sugar + bmi + TG, data = tt) # 建立多因素线性回归
-summary(lm.reg)                                           # 查看模型结果
-```
-
-```{r demo18-multi-num-solution}
-library(dplyr)                                            # 加载 dplyr
-tt <- mutate(tt, bmi = weight / height^2 * 10000)         # 计算 BMI
-lm.reg <- lm(health ~ SBP + DBP + TC + sugar + bmi + TG, data = tt) # 建立多因素线性回归
-summary(lm.reg)                                           # 查看模型结果
+```{r demo25-paired-1-solution}
+library(ggplot2)                         # 加载 ggplot2
+library(gapminder)                       # 加载 gapminder 数据
+head(gapminder, 6)                       # 查看前6行
+p1 <- ggplot(gapminder, aes(gdpPercap, lifeExp)) # 指定数据与x/y映射
+p1                                       # 显示只有坐标系统的基础画布
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习3：定量自变量多因素回归
+#### 练习1：建立ggplot基础画布
 
-**任务：** 基于练习1的 `tt`，添加 BMI，建立 `health ~ SBP + DBP + TC + sugar + bmi + TG` 模型 `lm.reg2`。
+**任务：** 加载 `ggplot2` 与 `gapminder`，把 `gdpPercap` 映射到x轴、`lifeExp` 映射到y轴，保存基础图为 `p1`。
 
-```{r ex18-3-setup, include=FALSE}
-r1820_replay("ex18-1")
-```
-
-```{r ex18-3, exercise=TRUE}
+```{r ex25-1, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-3-hint}
-library(dplyr)                                            # 加载 dplyr
-tt <- mutate(tt, bmi = weight / height^2 * 10000)         # 生成 BMI
-lm.reg2 <- lm(health ~ SBP + DBP + TC + sugar + bmi + TG, data = tt) # 建模
-summary(lm.reg2)                                          # 查看模型结果
+```{r ex25-1-hint}
+library(ggplot2)                         # 加载 ggplot2
+library(gapminder)                       # 加载 gapminder 数据
+head(gapminder, 6)                       # 查看前6行
+p1 <- ggplot(gapminder, aes(gdpPercap, lifeExp)) # 指定数据与x/y映射
+p1                                       # 显示只有坐标系统的基础画布
 ```
 
-```{r ex18-3-solution}
-library(dplyr)                                            # 加载 dplyr
-tt <- mutate(tt, bmi = weight / height^2 * 10000)         # 生成 BMI
-lm.reg2 <- lm(health ~ SBP + DBP + TC + sugar + bmi + TG, data = tt) # 建模
-summary(lm.reg2)                                          # 查看模型结果
+```{r ex25-1-solution}
+library(ggplot2)                         # 加载 ggplot2
+library(gapminder)                       # 加载 gapminder 数据
+head(gapminder, 6)                       # 查看前6行
+p1 <- ggplot(gapminder, aes(gdpPercap, lifeExp)) # 指定数据与x/y映射
+p1                                       # 显示只有坐标系统的基础画布
 ```
 
-```{r ex18-3-check}
+```{r ex25-1-check}
 gradethis::grade_code()
 ```
 
 </div>
-#### 分类自变量的处理
-<div class="module-explain">
-
-分类变量进入回归前应按研究设计正确编码并因子化。Word 示例依次生成：`sugar1`（血糖二分类）、`bmi1`（BMI四组）、`pressure`（高血压二分类）、`income1`（收入三组），再批量转为因子，并重新设置 `marriage`、`bmi1` 的因子水平顺序以改变对照组。
-
-Word 在此处还给出 `recode()` / `recode_factor()` 的 income 写法，但原稿存在 `t2/t22/tt` 对象名混用和中文逗号等问题。为了保持可运行，本教程的主流程采用同一 `tt` 对象完成等价分组。
-
-</div>
 <div class="module-example">
 
-<div class="module-label">示例4：准备分类自变量</div>
+<div class="module-label">示例2：添加散点图层</div>
 
-```{r demo18-factorprep-setup, include=FALSE}
-r1820_replay("ex18-1")
+```{r demo25-point-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r demo18-factorprep, exercise=TRUE}
-tt$bmi <- tt$weight / tt$height^2 * 10000                # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)                # 血糖>7.0 编码1，否则0
-
-tt$bmi1[tt$bmi >= 28] <- 4                               # BMI>=28 编码4
-tt$bmi1[tt$bmi >= 24 & tt$bmi < 28] <- 3                # 24<=BMI<28 编码3
-tt$bmi1[tt$bmi >= 18.5 & tt$bmi < 24] <- 2              # 18.5<=BMI<24 编码2
-tt$bmi1[tt$bmi < 18.5] <- 1                              # BMI<18.5 编码1
-tt$bmi1[is.na(tt$bmi)] <- NA                             # BMI缺失保持为 NA
-
-tt$pressure[tt$SBP >= 140 | tt$DBP >= 90] <- 1          # 高血压条件编码1
-tt$pressure[tt$SBP < 140 & tt$DBP < 90] <- 0             # 否则编码0
-
-tt$income1[tt$income >= 6] <- 3                          # income>=6 编码3
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2         # income 3-5 编码2
-tt$income1[tt$income <= 2] <- 1                           # income<=2 编码1
-
-varsToFactor <- c("sex", "huji", "marriage", "income1", "sugar1", "pressure", "bmi1") # 需要因子化的变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor)      # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2, 1, 3, 4, 5)) # 把 marriage 第2组放在首水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2, 1, 3, 4))       # 把 bmi1 第2组放在首水平
-str(tt)                                                   # 检查类型
+```{r demo25-point, exercise=TRUE}
+p1 + geom_point()  # 在基础画布上添加散点图层
 ```
 
-```{r demo18-factorprep-solution}
-tt$bmi <- tt$weight / tt$height^2 * 10000                # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)                # 血糖>7.0 编码1，否则0
-
-tt$bmi1[tt$bmi >= 28] <- 4                               # BMI>=28 编码4
-tt$bmi1[tt$bmi >= 24 & tt$bmi < 28] <- 3                # 24<=BMI<28 编码3
-tt$bmi1[tt$bmi >= 18.5 & tt$bmi < 24] <- 2              # 18.5<=BMI<24 编码2
-tt$bmi1[tt$bmi < 18.5] <- 1                              # BMI<18.5 编码1
-tt$bmi1[is.na(tt$bmi)] <- NA                             # BMI缺失保持为 NA
-
-tt$pressure[tt$SBP >= 140 | tt$DBP >= 90] <- 1          # 高血压条件编码1
-tt$pressure[tt$SBP < 140 & tt$DBP < 90] <- 0             # 否则编码0
-
-tt$income1[tt$income >= 6] <- 3                          # income>=6 编码3
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2         # income 3-5 编码2
-tt$income1[tt$income <= 2] <- 1                           # income<=2 编码1
-
-varsToFactor <- c("sex", "huji", "marriage", "income1", "sugar1", "pressure", "bmi1") # 需要因子化的变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor)      # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2, 1, 3, 4, 5)) # 把 marriage 第2组放在首水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2, 1, 3, 4))       # 把 bmi1 第2组放在首水平
-str(tt)                                                   # 检查类型
+```{r demo25-point-solution}
+p1 + geom_point()  # 在基础画布上添加散点图层
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习4：准备分类自变量
+#### 练习2：最基本散点图
 
-**任务：** 基于练习1的 `tt`，生成 `bmi`、`sugar1`、`bmi1`、`pressure`、`income1`，批量因子化并设置 `marriage`、`bmi1` 水平顺序。
+**任务：** 基于练习1实际建立的 `p1`，用 `geom_point()` 绘制散点图。
 
-```{r ex18-4-setup, include=FALSE}
-r1820_replay("ex18-1")
+```{r ex25-2-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r ex18-4, exercise=TRUE}
+```{r ex25-2, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-4-hint}
-tt$bmi <- tt$weight / tt$height^2 * 10000                # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)                # 血糖二分类
-tt$bmi1 <- cut(tt$bmi, breaks = c(-Inf, 18.5, 24, 28, Inf), labels = FALSE) # BMI四分类
-tt$pressure <- ifelse(tt$SBP >= 140 | tt$DBP >= 90, 1, 0) # 高血压二分类
-tt$income1[tt$income >= 6] <- 3                          # 高收入组
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2         # 中收入组
-tt$income1[tt$income <= 2] <- 1                           # 低收入组
-varsToFactor <- c("sex", "huji", "marriage", "income1", "sugar1", "pressure", "bmi1") # 指定分类变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor)      # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2, 1, 3, 4, 5)) # marriage第2组为首水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2, 1, 3, 4))       # bmi1第2组为首水平
-str(tt)                                                   # 检查数据结构
+```{r ex25-2-hint}
+p1 + geom_point()  # 添加散点图层
 ```
 
-```{r ex18-4-solution}
-tt$bmi <- tt$weight / tt$height^2 * 10000                # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)                # 血糖二分类
-tt$bmi1 <- cut(tt$bmi, breaks = c(-Inf, 18.5, 24, 28, Inf), labels = FALSE) # BMI四分类
-tt$pressure <- ifelse(tt$SBP >= 140 | tt$DBP >= 90, 1, 0) # 高血压二分类
-tt$income1[tt$income >= 6] <- 3                          # 高收入组
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2         # 中收入组
-tt$income1[tt$income <= 2] <- 1                           # 低收入组
-varsToFactor <- c("sex", "huji", "marriage", "income1", "sugar1", "pressure", "bmi1") # 指定分类变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor)      # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2, 1, 3, 4, 5)) # marriage第2组为首水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2, 1, 3, 4))       # bmi1第2组为首水平
-str(tt)                                                   # 检查数据结构
+```{r ex25-2-solution}
+p1 + geom_point()  # 添加散点图层
 ```
 
-```{r ex18-4-check}
+```{r ex25-2-check}
 gradethis::grade_code()
 ```
 
 </div>
-#### 多因素模型与逐步回归
+### 三、拟合曲线、对数坐标与标签
 <div class="module-explain">
 
-因子化后可把定量和分类自变量共同放入 `lm()`。Word 进一步使用 `step()` 做逐步回归，并指出逐步法遇到变量缺失时会失败，因此先 `na.omit()` 形成完整案例数据再建模。
+同一映射可以叠加 `geom_smooth()` 平滑曲线，也可用 `method="lm"` 指定直线拟合。Word 指出人均 GDP 右偏，使用 `scale_x_log10()` 改为对数刻度，并用 `scales::dollar` 改善刻度标签。`geom_point()`、`geom_smooth()` 还能直接设置固定颜色、透明度 `alpha`、线宽/点大小、是否显示置信区间；`labs()` 添加坐标名称、标题、副标题和图注。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例5：多因素模型与逐步回归</div>
+<div class="module-label">示例3：散点、拟合和对数刻度</div>
 
-```{r demo18-step-setup, include=FALSE}
-r1820_replay(c("ex18-1", "ex18-4"))
+```{r demo25-smooth-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r demo18-step, exercise=TRUE}
-tt1 <- na.omit(tt)  # 删除模型所需数据中的缺失记录
-lm.reg <- lm(
-  health ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  data = tt1
-)                          # 建立包含定量和分类自变量的线性模型
-summary(lm.reg)             # 查看完整模型
-lm.step <- step(lm.reg)     # 逐步回归筛选模型
-summary(lm.step)            # 查看逐步回归结果
+```{r demo25-smooth, exercise=TRUE}
+p1 + geom_point() + geom_smooth()                         # 散点加默认平滑曲线
+p1 + geom_point() + geom_smooth(method = "lm")           # 散点加线性拟合
+p1 + geom_point() + geom_smooth(method = "gam") +        # 平滑曲线
+  scale_x_log10()                                          # x轴改为对数刻度
+p1 + geom_point(color = "chartreuse4", alpha = 0.5) +    # 固定点颜色和透明度
+  geom_smooth(method = "loess") +                         # LOESS平滑
+  scale_x_log10(labels = scales::dollar)                   # 美化刻度标签
 ```
 
-```{r demo18-step-solution}
-tt1 <- na.omit(tt)  # 删除模型所需数据中的缺失记录
-lm.reg <- lm(
-  health ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  data = tt1
-)                          # 建立包含定量和分类自变量的线性模型
-summary(lm.reg)             # 查看完整模型
-lm.step <- step(lm.reg)     # 逐步回归筛选模型
-summary(lm.step)            # 查看逐步回归结果
+```{r demo25-smooth-solution}
+p1 + geom_point() + geom_smooth()                         # 散点加默认平滑曲线
+p1 + geom_point() + geom_smooth(method = "lm")           # 散点加线性拟合
+p1 + geom_point() + geom_smooth(method = "gam") +        # 平滑曲线
+  scale_x_log10()                                          # x轴改为对数刻度
+p1 + geom_point(color = "chartreuse4", alpha = 0.5) +    # 固定点颜色和透明度
+  geom_smooth(method = "loess") +                         # LOESS平滑
+  scale_x_log10(labels = scales::dollar)                   # 美化刻度标签
+```
+
+</div>
+<div class="module-example">
+
+```{r demo25-labs-setup, include=FALSE}
+r2426_replay("ex25-1")
+```
+
+```{r demo25-labs, exercise=TRUE}
+p1 +
+  geom_point(color = "chartreuse4", alpha = 0.5) +       # 设置点颜色和透明度
+  geom_smooth(color = "cadetblue1", se = FALSE, linewidth = 2) + # 设置拟合线并关闭置信区间
+  labs(
+    x = "人均 GDP",                                      # x轴标题
+    y = "期望寿命（年数）",                              # y轴标题
+    title = "经济增长与期望寿命",                        # 主标题
+    subtitle = "数据点为每个国家每年",                   # 副标题
+    caption = "数据来源: gapminder"                      # 图注
+  )
+```
+
+```{r demo25-labs-solution}
+p1 +
+  geom_point(color = "chartreuse4", alpha = 0.5) +       # 设置点颜色和透明度
+  geom_smooth(color = "cadetblue1", se = FALSE, linewidth = 2) + # 设置拟合线并关闭置信区间
+  labs(
+    x = "人均 GDP",                                      # x轴标题
+    y = "期望寿命（年数）",                              # y轴标题
+    title = "经济增长与期望寿命",                        # 主标题
+    subtitle = "数据点为每个国家每年",                   # 副标题
+    caption = "数据来源: gapminder"                      # 图注
+  )
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习5：逐步线性回归
+#### 练习3：拟合与对数坐标
 
-**任务：** 基于练习4实际准备的 `tt`，删除缺失为 `tt1`，建立 Word 中的多因素模型 `lm.reg3`，再 `step()` 得到 `lm.step`。
+**任务：** 基于 `p1`，叠加散点、`method="lm"` 的拟合线，并把x轴改为对数刻度。
 
-```{r ex18-5-setup, include=FALSE}
-r1820_replay(c("ex18-1", "ex18-4"))
+```{r ex25-3-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r ex18-5, exercise=TRUE}
+```{r ex25-3, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-5-hint}
-tt1 <- na.omit(tt)  # 删除缺失记录
-lm.reg3 <- lm(
-  health ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  data = tt1
-)                          # 建立多因素线性回归
-lm.step <- step(lm.reg3)    # 开展逐步回归
-summary(lm.step)            # 查看最终模型
+```{r ex25-3-hint}
+p1 +
+  geom_point() +                  # 添加散点
+  geom_smooth(method = "lm") +   # 添加线性拟合线
+  scale_x_log10()                 # x轴使用对数刻度
 ```
 
-```{r ex18-5-solution}
-tt1 <- na.omit(tt)  # 删除缺失记录
-lm.reg3 <- lm(
-  health ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  data = tt1
-)                          # 建立多因素线性回归
-lm.step <- step(lm.reg3)    # 开展逐步回归
-summary(lm.step)            # 查看最终模型
+```{r ex25-3-solution}
+p1 +
+  geom_point() +                  # 添加散点
+  geom_smooth(method = "lm") +   # 添加线性拟合线
+  scale_x_log10()                 # x轴使用对数刻度
 ```
 
-```{r ex18-5-check}
+```{r ex25-3-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 三、多因素线性回归结果的提取
+### 四、颜色、填充、符号与局部映射
 <div class="module-explain">
 
-`summary()` 可以通览模型，但还可以从模型对象和 summary 对象中提取特定结果。Word 示例包括系数、残差、标准化残差、R方、调整R方和 F 统计量。
-
-原稿出现 `coef(lmResults)[,c(1-7)]`，这在 R 中会计算为负列索引，不能表达“取第1到若干列”的本意。这里使用可运行的 `coef(lmResults)`（线性模型通常返回 Estimate、Std. Error、t value、Pr(>|t|) 四列）并保留原知识点。
+如果在 `aes()` 内写 `color=continent`，表示把变量映射为颜色，ggplot2 自动产生图例；`fill=continent` 同理映射填充。若只希望散点按洲着色、而所有数据共用一条拟合曲线，可把 `aes(color=continent)` 写在 `geom_point()` 中而不是全局 `ggplot()` 中。分类变量还可映射到 `shape`，连续变量可映射到渐变颜色。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例6：提取线性回归结果</div>
+<div class="module-label">示例4：把continent映射为颜色和填充</div>
 
-```{r demo18-extract-setup, include=FALSE}
-r1820_replay(c("ex18-1", "ex18-4", "ex18-5"))
+```{r demo25-map-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r demo18-extract, exercise=TRUE}
-lm.step$coefficients          # 提取回归系数
-lmResults <- summary(lm.step) # 保存 summary 结果
-r <- coef(lmResults)          # 提取系数矩阵
-write.csv(r, file = "rr.csv") # 导出系数表
-lm.step$residuals             # 提取观察值残差
-rstandard(lm.step)            # 提取标准化残差
-lmResults$r.squared           # 提取 R 方
-lmResults$adj.r.squared       # 提取调整 R 方
-lmResults$fstatistic          # 提取 F 统计量
+```{r demo25-map, exercise=TRUE}
+p2 <- ggplot(gapminder, aes(
+  x = gdpPercap,
+  y = lifeExp,
+  color = continent,  # 不同洲映射为不同颜色
+  fill = continent    # 置信区间填充也按洲区分
+))
+p2 + geom_point() +
+  geom_smooth(method = "loess") +
+  scale_x_log10(labels = scales::dollar)
 ```
 
-```{r demo18-extract-solution}
-lm.step$coefficients          # 提取回归系数
-lmResults <- summary(lm.step) # 保存 summary 结果
-r <- coef(lmResults)          # 提取系数矩阵
-write.csv(r, file = "rr.csv") # 导出系数表
-lm.step$residuals             # 提取观察值残差
-rstandard(lm.step)            # 提取标准化残差
-lmResults$r.squared           # 提取 R 方
-lmResults$adj.r.squared       # 提取调整 R 方
-lmResults$fstatistic          # 提取 F 统计量
+```{r demo25-map-solution}
+p2 <- ggplot(gapminder, aes(
+  x = gdpPercap,
+  y = lifeExp,
+  color = continent,  # 不同洲映射为不同颜色
+  fill = continent    # 置信区间填充也按洲区分
+))
+p2 + geom_point() +
+  geom_smooth(method = "loess") +
+  scale_x_log10(labels = scales::dollar)
 ```
 
 </div>
-<div class="module-exercise">
+<div class="module-example">
 
-#### 练习6：提取并导出结果
-
-**任务：** 基于练习5实际生成的 `lm.step`，提取系数矩阵为 `r`，导出 `rr.csv`，再查看 R方、调整R方和F统计量。
-
-```{r ex18-6-setup, include=FALSE}
-r1820_replay(c("ex18-1", "ex18-4", "ex18-5"))
+```{r demo25-local-map-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r ex18-6, exercise=TRUE}
+```{r demo25-local-map, exercise=TRUE}
+p3 <- ggplot(gapminder, aes(gdpPercap, lifeExp))  # 全局只映射x、y
+p3 +
+  geom_point(aes(color = continent)) +             # 仅散点按洲着色
+  geom_smooth(method = "loess") +                  # 全部数据拟合同一条曲线
+  scale_x_log10(labels = scales::dollar)
+```
+
+```{r demo25-local-map-solution}
+p3 <- ggplot(gapminder, aes(gdpPercap, lifeExp))  # 全局只映射x、y
+p3 +
+  geom_point(aes(color = continent)) +             # 仅散点按洲着色
+  geom_smooth(method = "loess") +                  # 全部数据拟合同一条曲线
+  scale_x_log10(labels = scales::dollar)
+```
+
+</div>
+```{r static25-shape-cont, eval=FALSE, echo=TRUE}
+# 只取2007年数据，并把 continent 映射到点形状
+p2007 <- dplyr::filter(gapminder, year >= 2007)  # 筛选2007年数据
+ggplot(p2007, aes(gdpPercap, lifeExp)) +
+  geom_point(aes(shape = continent), alpha = 0.4, size = 4) + # 不同洲不同点形状
+  scale_x_log10(labels = scales::dollar)
+
+# 把连续变量人口数的自然对数映射为颜色
+ggplot(gapminder, aes(gdpPercap, lifeExp, color = log(pop))) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  scale_x_log10(labels = scales::dollar)
+```
+<div class="module-exercise">
+
+#### 练习4：颜色映射
+
+**任务：** 基于 `gapminder`，建立 `p2`：x为 `gdpPercap`、y为 `lifeExp`、颜色映射 `continent`，再绘制散点图。
+
+```{r ex25-4-setup, include=FALSE}
+r2426_replay("ex25-1")
+```
+
+```{r ex25-4, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-6-hint}
-lmResults <- summary(lm.step)  # 保存逐步回归 summary 对象
-r <- coef(lmResults)            # 提取系数矩阵
-write.csv(r, file = "rr.csv")   # 导出结果表
-lmResults$r.squared             # 查看 R 方
-lmResults$adj.r.squared         # 查看调整 R 方
-lmResults$fstatistic            # 查看 F 统计量
+```{r ex25-4-hint}
+p2 <- ggplot(gapminder, aes(
+  x = gdpPercap,                 # 人均GDP映射到x轴
+  y = lifeExp,                   # 期望寿命映射到y轴
+  color = continent              # 大洲映射到颜色
+))
+p2 + geom_point()               # 绘制不同颜色的散点
 ```
 
-```{r ex18-6-solution}
-lmResults <- summary(lm.step)  # 保存逐步回归 summary 对象
-r <- coef(lmResults)            # 提取系数矩阵
-write.csv(r, file = "rr.csv")   # 导出结果表
-lmResults$r.squared             # 查看 R 方
-lmResults$adj.r.squared         # 查看调整 R 方
-lmResults$fstatistic            # 查看 F 统计量
+```{r ex25-4-solution}
+p2 <- ggplot(gapminder, aes(
+  x = gdpPercap,                 # 人均GDP映射到x轴
+  y = lifeExp,                   # 期望寿命映射到y轴
+  color = continent              # 大洲映射到颜色
+))
+p2 + geom_point()               # 绘制不同颜色的散点
 ```
 
-```{r ex18-6-check}
+```{r ex25-4-check}
 gradethis::grade_code()
 ```
 
 </div>
-### 四、回归诊断
+### 五、小图（facet）
 <div class="module-explain">
 
-Word 将回归诊断分为残差图、残差独立性和共线性。残差图用拟合值与残差及 `plot(lm.step, which=1:4)`；`car::durbinWatsonTest()` 检查残差独立性；`car::vif()` 评估方差膨胀因子；还以相关矩阵的 `kappa()`、`eigen()` 展示共线性相关的矩阵诊断。
+当一张图中分组曲线过多时，可用 `facet_wrap()` 按分类变量拆成多个小图。它不是 `aes()` 映射，而是图形排布。`ncol`/`nrow` 控制小图布局；`scales="fixed"` 默认各图坐标范围一致，`free_x`、`free_y`、`free` 允许相应坐标自由变化。Word 提醒：统一坐标更方便比较，只有有合理理由时才放开。
 
 </div>
 <div class="module-example">
 
-<div class="module-label">示例7：回归诊断</div>
+<div class="module-label">示例5：按洲分面</div>
 
-```{r demo18-diagnose-setup, include=FALSE}
-r1820_replay(c("ex18-1", "ex18-4", "ex18-5"))
+```{r demo25-facet-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r demo18-diagnose, exercise=TRUE}
-plot(fitted(lm.step), resid(lm.step))  # 绘制拟合值与残差散点图
-par(mfrow = c(2, 2))                   # 设置 2×2 画布
-plot(lm.step, which = 1:4)             # 绘制前4幅常用诊断图
-
-library(car)                           # 加载 car 包
-durbinWatsonTest(lm.step)              # Durbin-Watson 残差独立性检验
-vif(lm.step)                            # 计算方差膨胀因子
-
-XX <- cor(tt1[c("SBP", "DBP", "TC", "sugar", "TG", "bmi")], use = "complete.obs") # 计算相关矩阵
-kappa(XX, exact = TRUE)                # 计算条件数
-eigen(XX)                              # 计算特征值和特征向量
+```{r demo25-facet, exercise=TRUE}
+p4 <- ggplot(gapminder, aes(
+  x = gdpPercap,
+  y = lifeExp,
+  color = continent
+))
+p4 +
+  geom_point() +                                      # 绘制散点
+  geom_smooth(method = "loess") +                    # 各洲拟合曲线
+  scale_x_log10(labels = scales::dollar) +            # x轴对数刻度
+  facet_wrap(~ continent, ncol = 2)                   # 每个洲单独小图，两列排列
 ```
 
-```{r demo18-diagnose-solution}
-plot(fitted(lm.step), resid(lm.step))  # 绘制拟合值与残差散点图
-par(mfrow = c(2, 2))                   # 设置 2×2 画布
-plot(lm.step, which = 1:4)             # 绘制前4幅常用诊断图
-
-library(car)                           # 加载 car 包
-durbinWatsonTest(lm.step)              # Durbin-Watson 残差独立性检验
-vif(lm.step)                            # 计算方差膨胀因子
-
-XX <- cor(tt1[c("SBP", "DBP", "TC", "sugar", "TG", "bmi")], use = "complete.obs") # 计算相关矩阵
-kappa(XX, exact = TRUE)                # 计算条件数
-eigen(XX)                              # 计算特征值和特征向量
+```{r demo25-facet-solution}
+p4 <- ggplot(gapminder, aes(
+  x = gdpPercap,
+  y = lifeExp,
+  color = continent
+))
+p4 +
+  geom_point() +                                      # 绘制散点
+  geom_smooth(method = "loess") +                    # 各洲拟合曲线
+  scale_x_log10(labels = scales::dollar) +            # x轴对数刻度
+  facet_wrap(~ continent, ncol = 2)                   # 每个洲单独小图，两列排列
 ```
 
 </div>
 <div class="module-exercise">
 
-#### 练习7：残差与共线性诊断
+#### 练习5：facet分面
 
-**任务：** 基于练习5的 `lm.step` 和 `tt1`，画拟合值-残差图，加载 `car` 计算 VIF。
+**任务：** 基于 `gapminder`，按 `continent` 着色并用 `facet_wrap()` 拆成两列小图，x轴使用对数刻度。
 
-```{r ex18-7-setup, include=FALSE}
-r1820_replay(c("ex18-1", "ex18-4", "ex18-5"))
+```{r ex25-5-setup, include=FALSE}
+r2426_replay("ex25-1")
 ```
 
-```{r ex18-7, exercise=TRUE}
+```{r ex25-5, exercise=TRUE}
 # 在这里输入代码
 ```
 
-```{r ex18-7-hint}
-plot(fitted(lm.step), resid(lm.step))  # 绘制拟合值与残差图
-library(car)                           # 加载 car
-vif(lm.step)                            # 计算各自变量 VIF
+```{r ex25-5-hint}
+p3 <- ggplot(gapminder, aes(gdpPercap, lifeExp, color = continent))  # 设置数据与映射
+p3 +
+  geom_point() +                                  # 添加散点
+  scale_x_log10() +                               # x轴对数刻度
+  facet_wrap(~ continent, ncol = 2)               # 按洲分面
 ```
 
-```{r ex18-7-solution}
-plot(fitted(lm.step), resid(lm.step))  # 绘制拟合值与残差图
-library(car)                           # 加载 car
-vif(lm.step)                            # 计算各自变量 VIF
+```{r ex25-5-solution}
+p3 <- ggplot(gapminder, aes(gdpPercap, lifeExp, color = continent))  # 设置数据与映射
+p3 +
+  geom_point() +                                  # 添加散点
+  scale_x_log10() +                               # x轴对数刻度
+  facet_wrap(~ continent, ncol = 2)               # 按洲分面
 ```
 
-```{r ex18-7-check}
+```{r ex25-5-check}
+gradethis::grade_code()
+```
+
+</div>
+### 六、小结
+<div class="module-summary">
+
+ggplot2 的核心不是记住固定图形模板，而是理解“数据 + 映射 + 图层 + 标度 + 坐标 + 分面”的组合。一个图可以有多个图层，各层可以继承全局映射，也可以有自己的数据或局部映射。图形新颖并不等于有意义，最终仍应遵循清楚、可解释的可视化原则。
+
+</div>
+<div class="copy-area">
+
+### 第25讲：练习参考代码
+
+```{r r2426-copy-server-25, context="server", include=FALSE}
+observeEvent(input$r2426_copy_25, {
+  code <- c(
+    "# 练习1：基础画布",
+    "library(ggplot2)  # 加载ggplot2",
+    "library(gapminder)  # 加载gapminder",
+    "p1 <- ggplot(gapminder,aes(gdpPercap,lifeExp))  # 设置数据与x/y映射",
+    "p1  # 显示基础画布",
+    "",
+    "# 练习2：散点图",
+    "p1 + geom_point()  # 添加散点层",
+    "",
+    "# 练习3：拟合与对数坐标",
+    "p1 + geom_point() + geom_smooth(method=\"lm\") + scale_x_log10()  # 散点+线性拟合+x对数",
+    "",
+    "# 练习4：颜色映射",
+    "p2 <- ggplot(gapminder,aes(x=gdpPercap,y=lifeExp,color=continent))  # continent映射颜色",
+    "p2 + geom_point()  # 绘制散点",
+    "",
+    "# 练习5：分面",
+    "p3 <- ggplot(gapminder,aes(gdpPercap,lifeExp,color=continent))  # 设置映射",
+    "p3 + geom_point() + scale_x_log10() + facet_wrap(~continent,ncol=2)  # 对数坐标并分面"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r2426_copy_status_25 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r2426-copy-button-25, echo=FALSE}
+actionButton("r2426_copy_25", "复制本讲练习参考代码")
+br()
+textOutput("r2426_copy_status_25")
+```
+
+</div>
+
+## 第26讲 ggpubr数据可视化包的使用介绍
+### 引言
+<div class="module-explain">
+
+`ggpubr` 基于 `ggplot2`，封装了大量常用绘图操作，并提供适合论文图形的便利接口。Word 依次演示密度图、直方图、带散点的箱线图，以及箱线图叠加在小提琴图中。
+
+</div>
+### 一、下载安装包与预处理
+<div class="module-explain">
+
+Word 原稿写 `elder1 <- read.csv("elder.csv")`，而前面所有章节和同一段变量名都使用 `elder1.csv`。为与整套课程数据保持一致，正式练习使用 `elder1.csv`；如果你手头的实际文件确实叫 `elder.csv`，把文件名替换即可。
+
+</div>
+```{r static26-install, eval=FALSE, echo=TRUE}
+install.packages("ggpubr")  # 首次使用时安装 ggpubr
+library(ggpubr)              # 加载 ggpubr
+```
+<div class="module-example">
+<div class="module-label">示例1：准备ggpubr绘图数据</div>
+
+```{r demo26-paired-1-setup, include=FALSE}
+r2426_prepare_workdir()
+```
+
+```{r demo26-paired-1, exercise=TRUE}
+library(ggpubr)                     # 加载 ggpubr
+elder1 <- read.csv("elder1.csv")     # 导入 elder1（Word 原稿此处文件名写 elder.csv）
+elder2 <- read.csv("elder2.csv")     # 导入 elder2
+tt <- merge(elder1, elder2, by = "ID") # 按 ID 合并
+tt$sex <- as.factor(tt$sex)           # sex 转为因子
+tt$health <- as.factor(tt$health)     # health 转为因子
+tt <- na.omit(tt)                     # 删除缺失记录
+str(tt)                               # 查看整理后的结构
+```
+
+```{r demo26-paired-1-solution}
+library(ggpubr)                     # 加载 ggpubr
+elder1 <- read.csv("elder1.csv")     # 导入 elder1（Word 原稿此处文件名写 elder.csv）
+elder2 <- read.csv("elder2.csv")     # 导入 elder2
+tt <- merge(elder1, elder2, by = "ID") # 按 ID 合并
+tt$sex <- as.factor(tt$sex)           # sex 转为因子
+tt$health <- as.factor(tt$health)     # health 转为因子
+tt <- na.omit(tt)                     # 删除缺失记录
+str(tt)                               # 查看整理后的结构
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习1：准备ggpubr绘图数据
+
+**任务：** 导入 `elder1.csv`、`elder2.csv`，按 `ID` 合并为 `tt`，把 `sex`、`health` 转为因子并删除缺失记录。
+
+```{r ex26-1-setup, include=FALSE}
+r2426_prepare_workdir()
+```
+
+```{r ex26-1, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex26-1-hint}
+library(ggpubr)                     # 加载 ggpubr
+elder1 <- read.csv("elder1.csv")     # 导入 elder1（Word 原稿此处文件名写 elder.csv）
+elder2 <- read.csv("elder2.csv")     # 导入 elder2
+tt <- merge(elder1, elder2, by = "ID") # 按 ID 合并
+tt$sex <- as.factor(tt$sex)           # sex 转为因子
+tt$health <- as.factor(tt$health)     # health 转为因子
+tt <- na.omit(tt)                     # 删除缺失记录
+str(tt)                               # 查看整理后的结构
+```
+
+```{r ex26-1-solution}
+library(ggpubr)                     # 加载 ggpubr
+elder1 <- read.csv("elder1.csv")     # 导入 elder1（Word 原稿此处文件名写 elder.csv）
+elder2 <- read.csv("elder2.csv")     # 导入 elder2
+tt <- merge(elder1, elder2, by = "ID") # 按 ID 合并
+tt$sex <- as.factor(tt$sex)           # sex 转为因子
+tt$health <- as.factor(tt$health)     # health 转为因子
+tt <- na.omit(tt)                     # 删除缺失记录
+str(tt)                               # 查看整理后的结构
+```
+
+```{r ex26-1-check}
+gradethis::grade_code()
+```
+
+</div>
+### 二、密度分布图
+<div class="module-explain">
+
+Word 在绘图前设置 `set.seed(1234)`，用于需要随机性（例如抖动等）时保证结果可重复。`ggdensity()` 中 `x` 指定变量，`add="mean"` 添加均值线，`rug=TRUE` 添加边缘地毯线，`color`/`fill` 按分组变量映射轮廓和填充，`palette` 自定义颜色。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例2：按性别绘制health密度图</div>
+
+```{r demo26-density-setup, include=FALSE}
+r2426_replay("ex26-1")
+```
+
+```{r demo26-density, exercise=TRUE}
+set.seed(1234)  # 固定随机种子，便于可重复
+ggdensity(
+  tt, x = "health",             # 指定 x 变量
+  add = "mean",                 # 添加均值线
+  rug = TRUE,                    # 添加边缘地毯线
+  color = "sex", fill = "sex", # 按 sex 映射轮廓和填充
+  palette = c("#00AFBB", "#E7B900") # 自定义配色
+)
+```
+
+```{r demo26-density-solution}
+set.seed(1234)  # 固定随机种子，便于可重复
+ggdensity(
+  tt, x = "health",             # 指定 x 变量
+  add = "mean",                 # 添加均值线
+  rug = TRUE,                    # 添加边缘地毯线
+  color = "sex", fill = "sex", # 按 sex 映射轮廓和填充
+  palette = c("#00AFBB", "#E7B900") # 自定义配色
+)
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习2：密度分布图
+
+**任务：** 基于练习1的 `tt`，使用 `ggdensity()` 绘制 `health` 密度图，按 `sex` 设置颜色和填充，并加入均值线和rug。
+
+```{r ex26-2-setup, include=FALSE}
+r2426_replay("ex26-1")
+```
+
+```{r ex26-2, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex26-2-hint}
+set.seed(1234)  # 固定随机种子
+ggdensity(
+  tt, x = "health",              # 绘制 health 密度
+  add = "mean",                  # 添加均值线
+  rug = TRUE,                     # 添加 rug
+  color = "sex", fill = "sex",  # 按 sex 分组着色
+  palette = c("#00AFBB", "#E7B900") # 指定颜色
+)
+```
+
+```{r ex26-2-solution}
+set.seed(1234)  # 固定随机种子
+ggdensity(
+  tt, x = "health",              # 绘制 health 密度
+  add = "mean",                  # 添加均值线
+  rug = TRUE,                     # 添加 rug
+  color = "sex", fill = "sex",  # 按 sex 分组着色
+  palette = c("#00AFBB", "#E7B900") # 指定颜色
+)
+```
+
+```{r ex26-2-check}
+gradethis::grade_code()
+```
+
+</div>
+### 三、直方图
+<div class="module-explain">
+
+Word 先把 `BUA` 转为数值型，再使用 `gghistogram()`。参数结构与密度图相似，同样可加均值、rug，并按 `sex` 设置轮廓和填充。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例3：BUA直方图</div>
+
+```{r demo26-hist-setup, include=FALSE}
+r2426_replay("ex26-1")
+```
+
+```{r demo26-hist, exercise=TRUE}
+tt$BUA <- as.numeric(tt$BUA)  # 将 BUA 转为数值型
+gghistogram(
+  tt, x = "BUA",               # 指定 BUA 为 x 变量
+  add = "mean", rug = TRUE,   # 添加均值线和 rug
+  color = "sex", fill = "sex", # 按 sex 分组
+  palette = c("#00AFBB", "#E7B800") # 自定义配色
+)
+```
+
+```{r demo26-hist-solution}
+tt$BUA <- as.numeric(tt$BUA)  # 将 BUA 转为数值型
+gghistogram(
+  tt, x = "BUA",               # 指定 BUA 为 x 变量
+  add = "mean", rug = TRUE,   # 添加均值线和 rug
+  color = "sex", fill = "sex", # 按 sex 分组
+  palette = c("#00AFBB", "#E7B800") # 自定义配色
+)
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习3：BUA直方图
+
+**任务：** 基于练习1的 `tt`，把 `BUA` 转为数值型，用 `gghistogram()` 按 `sex` 分组绘制直方图。
+
+```{r ex26-3-setup, include=FALSE}
+r2426_replay("ex26-1")
+```
+
+```{r ex26-3, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex26-3-hint}
+tt$BUA <- as.numeric(tt$BUA)  # 将 BUA 转为数值型
+gghistogram(
+  tt, x = "BUA",               # 绘制 BUA 直方图
+  add = "mean", rug = TRUE,   # 加均值线和 rug
+  color = "sex", fill = "sex", # 按 sex 着色
+  palette = c("#00AFBB", "#E7B800") # 配色
+)
+```
+
+```{r ex26-3-solution}
+tt$BUA <- as.numeric(tt$BUA)  # 将 BUA 转为数值型
+gghistogram(
+  tt, x = "BUA",               # 绘制 BUA 直方图
+  add = "mean", rug = TRUE,   # 加均值线和 rug
+  color = "sex", fill = "sex", # 按 sex 着色
+  palette = c("#00AFBB", "#E7B800") # 配色
+)
+```
+
+```{r ex26-3-check}
+gradethis::grade_code()
+```
+
+</div>
+### 四、具有不同点分布的箱线图
+<div class="module-explain">
+
+Word 把 `drinking` 转为因子，把 `BMD_T` 转为数值后，用 `ggboxplot()` 绘制不同饮酒组的 BMD_T 箱线图。`add="jitter"` 在箱线图上叠加抖动散点，`shape="drinking"` 让点形状随组别变化。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例4：带抖动点的箱线图</div>
+
+```{r demo26-box-setup, include=FALSE}
+r2426_replay("ex26-1")
+```
+
+```{r demo26-box, exercise=TRUE}
+tt$drinking <- as.factor(tt$drinking)  # drinking 转为因子
+tt$BMD_T <- as.numeric(tt$BMD_T)        # BMD_T 转为数值型
+tt <- na.omit(tt)                       # 删除缺失记录
+ggboxplot(
+  tt, x = "drinking", y = "BMD_T",   # 指定分组和连续结局
+  color = "drinking",                  # 按 drinking 设置轮廓颜色
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 自定义颜色
+  add = "jitter",                      # 叠加抖动散点
+  shape = "drinking"                   # 点形状按 drinking 分组
+)
+```
+
+```{r demo26-box-solution}
+tt$drinking <- as.factor(tt$drinking)  # drinking 转为因子
+tt$BMD_T <- as.numeric(tt$BMD_T)        # BMD_T 转为数值型
+tt <- na.omit(tt)                       # 删除缺失记录
+ggboxplot(
+  tt, x = "drinking", y = "BMD_T",   # 指定分组和连续结局
+  color = "drinking",                  # 按 drinking 设置轮廓颜色
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 自定义颜色
+  add = "jitter",                      # 叠加抖动散点
+  shape = "drinking"                   # 点形状按 drinking 分组
+)
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习4：箱线图加散点
+
+**任务：** 基于练习1的 `tt`，整理 `drinking` 与 `BMD_T` 类型，用 `ggboxplot()` 绘制箱线图并叠加 jitter 点。
+
+```{r ex26-4-setup, include=FALSE}
+r2426_replay("ex26-1")
+```
+
+```{r ex26-4, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex26-4-hint}
+tt$drinking <- as.factor(tt$drinking)  # drinking 因子化
+tt$BMD_T <- as.numeric(tt$BMD_T)        # BMD_T 数值化
+tt <- na.omit(tt)                       # 删除缺失
+ggboxplot(
+  tt, x = "drinking", y = "BMD_T",   # 指定变量
+  color = "drinking",                  # 分组颜色
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 配色
+  add = "jitter",                      # 添加抖动散点
+  shape = "drinking"                   # 分组点形状
+)
+```
+
+```{r ex26-4-solution}
+tt$drinking <- as.factor(tt$drinking)  # drinking 因子化
+tt$BMD_T <- as.numeric(tt$BMD_T)        # BMD_T 数值化
+tt <- na.omit(tt)                       # 删除缺失
+ggboxplot(
+  tt, x = "drinking", y = "BMD_T",   # 指定变量
+  color = "drinking",                  # 分组颜色
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 配色
+  add = "jitter",                      # 添加抖动散点
+  shape = "drinking"                   # 分组点形状
+)
+```
+
+```{r ex26-4-check}
+gradethis::grade_code()
+```
+
+</div>
+### 五、小提琴图内添加箱线图
+<div class="module-explain">
+
+`ggviolin()` 可绘制小提琴图，`add="boxplot"` 在内部叠加箱线图，`add.params` 调整内部箱线图样式。Word 随后还加了两层 `stat_compare_means()`：一层指定 `comparisons=my_comparisons` 标注组间显著性，一层显示整体比较。**但 Word 所提供的文本中没有定义 `my_comparisons` 的具体比较对，因此本教程不擅自补造比较组。**正式练习先完成可独立运行的小提琴图+箱线图；显著性标注代码按原稿作为静态延伸。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例5：小提琴图叠加箱线图</div>
+
+```{r demo26-violin-setup, include=FALSE}
+r2426_replay(c("ex26-1", "ex26-4"))
+```
+
+```{r demo26-violin, exercise=TRUE}
+ggviolin(
+  tt, x = "drinking", y = "BMD_T",  # 指定分组与连续变量
+  fill = "drinking",                    # 按 drinking 填充
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 配色
+  add = "boxplot",                      # 内部添加箱线图
+  add.params = list(fill = "green")     # 设置内部箱线图填充色
+)
+```
+
+```{r demo26-violin-solution}
+ggviolin(
+  tt, x = "drinking", y = "BMD_T",  # 指定分组与连续变量
+  fill = "drinking",                    # 按 drinking 填充
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 配色
+  add = "boxplot",                      # 内部添加箱线图
+  add.params = list(fill = "green")     # 设置内部箱线图填充色
+)
+```
+
+</div>
+```{r static26-compare, eval=FALSE, echo=TRUE}
+# Word 原稿的显著性标注写法；运行前必须先自行定义 my_comparisons
+ggviolin(tt, x = "drinking", y = "BMD_T", fill = "drinking", add = "boxplot") +
+  stat_compare_means(comparisons = my_comparisons, label = "p.signif") + # 指定两两比较
+  stat_compare_means(label.y = 50)                                         # 添加整体比较结果
+```
+<div class="module-exercise">
+
+#### 练习5：小提琴图加箱线图
+
+**任务：** 基于练习4实际整理过的 `tt`，用 `ggviolin()` 绘制 `BMD_T` 按 `drinking` 分组的小提琴图，并叠加箱线图。
+
+```{r ex26-5-setup, include=FALSE}
+r2426_replay(c("ex26-1", "ex26-4"))
+```
+
+```{r ex26-5, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex26-5-hint}
+ggviolin(
+  tt, x = "drinking", y = "BMD_T",  # 指定变量
+  fill = "drinking",                    # 分组填充
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 配色
+  add = "boxplot",                      # 添加箱线图
+  add.params = list(fill = "green")     # 内部箱线图填充色
+)
+```
+
+```{r ex26-5-solution}
+ggviolin(
+  tt, x = "drinking", y = "BMD_T",  # 指定变量
+  fill = "drinking",                    # 分组填充
+  palette = c("#00AFBB", "#E7B800", "#FC4E07", "#FC4B02"), # 配色
+  add = "boxplot",                      # 添加箱线图
+  add.params = list(fill = "green")     # 内部箱线图填充色
+)
+```
+
+```{r ex26-5-check}
 gradethis::grade_code()
 ```
 
 </div>
 <div class="copy-area">
 
-### 第18讲：练习参考代码
+### 第26讲：练习参考代码
 
-```{r r1820-copy-server-18, context="server", include=FALSE}
-observeEvent(input$r1820_copy_18, {
+```{r r2426-copy-server-26, context="server", include=FALSE}
+observeEvent(input$r2426_copy_26, {
   code <- c(
-    "# 练习1：导入合并",
-    "library(dplyr)  # 加载dplyr",
+    "# 练习1：准备数据",
+    "library(ggpubr)  # 加载ggpubr",
     "elder1 <- read.csv(\"elder1.csv\")  # 导入elder1",
     "elder2 <- read.csv(\"elder2.csv\")  # 导入elder2",
-    "tt <- inner_join(elder1,elder2,by=\"ID\")  # 按ID内连接",
-    "write.csv(tt,file=\"tt.csv\",row.names=FALSE)  # 导出tt",
+    "tt <- merge(elder1,elder2,by=\"ID\")  # 合并",
+    "tt$sex <- as.factor(tt$sex)  # sex因子化",
+    "tt$health <- as.factor(tt$health)  # health因子化",
+    "tt <- na.omit(tt)  # 删除缺失",
     "",
-    "# 练习2：简单回归",
-    "age <- 8:19  # 年龄",
-    "height <- c(76.1,77,78.1,78.2,78.8,79.7,79.9,81.1,81.2,81.8,82.8,83.5)  # 身高",
-    "lm.reg1 <- lm(height ~ age)  # 建模",
-    "summary(lm.reg1)  # 查看结果",
+    "# 练习2：密度图",
+    "set.seed(1234)  # 固定随机种子",
+    "ggdensity(tt,x=\"health\",add=\"mean\",rug=TRUE,color=\"sex\",fill=\"sex\",palette=c(\"#00AFBB\",\"#E7B900\"))  # 密度图",
     "",
-    "# 练习3：多因素定量回归",
-    "tt <- mutate(tt,bmi=weight/height^2*10000)  # 计算BMI",
-    "lm.reg2 <- lm(health~SBP+DBP+TC+sugar+bmi+TG,data=tt)  # 建模",
-    "summary(lm.reg2)  # 查看结果",
+    "# 练习3：直方图",
+    "tt$BUA <- as.numeric(tt$BUA)  # BUA数值化",
+    "gghistogram(tt,x=\"BUA\",add=\"mean\",rug=TRUE,color=\"sex\",fill=\"sex\",palette=c(\"#00AFBB\",\"#E7B800\"))  # 直方图",
     "",
-    "# 练习4：准备分类变量",
-    "tt$bmi <- tt$weight/tt$height^2*10000  # BMI",
-    "tt$sugar1 <- ifelse(tt$sugar>7,1,0)  # 血糖二分类",
-    "tt$bmi1 <- cut(tt$bmi,breaks=c(-Inf,18.5,24,28,Inf),labels=FALSE)  # BMI四分类",
-    "tt$pressure <- ifelse(tt$SBP>=140 | tt$DBP>=90,1,0)  # 高血压",
-    "tt$income1[tt$income>=6] <- 3  # income高组",
-    "tt$income1[tt$income>=3 & tt$income<=5] <- 2  # income中组",
-    "tt$income1[tt$income<=2] <- 1  # income低组",
-    "varsToFactor <- c(\"sex\",\"huji\",\"marriage\",\"income1\",\"sugar1\",\"pressure\",\"bmi1\")  # 分类变量",
-    "tt[varsToFactor] <- lapply(tt[varsToFactor],factor)  # 批量因子化",
-    "tt$marriage <- factor(tt$marriage,levels=c(2,1,3,4,5))  # 调整参考水平",
-    "tt$bmi1 <- factor(tt$bmi1,levels=c(2,1,3,4))  # 调整参考水平",
+    "# 练习4：箱线图",
+    "tt$drinking <- as.factor(tt$drinking)  # drinking因子化",
+    "tt$BMD_T <- as.numeric(tt$BMD_T)  # BMD_T数值化",
+    "tt <- na.omit(tt)  # 删除缺失",
+    "ggboxplot(tt,x=\"drinking\",y=\"BMD_T\",color=\"drinking\",palette=c(\"#00AFBB\",\"#E7B800\",\"#FC4E07\",\"#FC4B02\"),add=\"jitter\",shape=\"drinking\")  # 箱线图+jitter",
     "",
-    "# 练习5：逐步回归",
-    "tt1 <- na.omit(tt)  # 删除缺失",
-    "lm.reg3 <- lm(health~sex+huji+marriage+TC+TG+sugar1+bmi1+pressure+income1,data=tt1)  # 多因素模型",
-    "lm.step <- step(lm.reg3)  # 逐步回归",
-    "summary(lm.step)  # 查看结果",
-    "",
-    "# 练习6：提取结果",
-    "lmResults <- summary(lm.step)  # summary对象",
-    "r <- coef(lmResults)  # 系数矩阵",
-    "write.csv(r,file=\"rr.csv\")  # 导出结果",
-    "lmResults$r.squared  # R方",
-    "lmResults$adj.r.squared  # 调整R方",
-    "lmResults$fstatistic  # F统计量",
-    "",
-    "# 练习7：诊断",
-    "plot(fitted(lm.step),resid(lm.step))  # 残差图",
-    "library(car)  # 加载car",
-    "vif(lm.step)  # VIF"
+    "# 练习5：小提琴图",
+    "ggviolin(tt,x=\"drinking\",y=\"BMD_T\",fill=\"drinking\",palette=c(\"#00AFBB\",\"#E7B800\",\"#FC4E07\",\"#FC4B02\"),add=\"boxplot\",add.params=list(fill=\"green\"))  # 小提琴图+箱线图"
   )
   clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
-  output$r1820_copy_status_18 <- renderText("已复制本讲练习参考代码。")
+  output$r2426_copy_status_26 <- renderText("已复制本讲练习参考代码。")
 })
 ```
 
-```{r r1820-copy-button-18, echo=FALSE}
-actionButton("r1820_copy_18", "复制本讲练习参考代码")
+```{r r2426-copy-button-26, echo=FALSE}
+actionButton("r2426_copy_26", "复制本讲练习参考代码")
 br()
-textOutput("r1820_copy_status_18")
-```
-
-</div>
-
-## 第19讲 利用R语言进行logistic回归分析
-### 引言
-<div class="module-explain">
-
-Logistic 回归用于二分类（以及扩展情况下多分类）结局。Word 以失眠 `insomnia1` 为二分类结局，介绍数据整理、`glm(..., family=binomial(link="logit"))`、逐步回归、OR与95%CI、预测/残差以及 `broom` 整理模型结果。
-
-</div>
-### 一、准备工作与数据整理
-<div class="module-explain">
-
-本讲的数据整理与第18讲相似：导入并按 ID 合并、计算 BMI、生成 sugar1/bmi1/pressure/income1、批量因子化、调整参考水平、把失眠重新编码为0/1因子，最后 `na.omit()` 形成完整案例。Word 原稿有 `tt[vars] <- lapply(tt1[vars],factor)` 的对象名混写，本教程按上下文使用 `tt[vars]`，并在代码中保持同一对象。
-
-</div>
-<div class="module-example">
-<div class="module-label">示例1：准备logistic分析数据</div>
-
-```{r demo19-paired-1-setup, include=FALSE}
-r1820_prepare_workdir()
-```
-
-```{r demo19-paired-1, exercise=TRUE}
-library(dplyr)                              # 加载 dplyr
-elder1 <- read.csv("elder1.csv")            # 导入 elder1
-elder2 <- read.csv("elder2.csv")            # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID") # 按 ID 合并
-tt <- mutate(tt, bmi = weight / height^2 * 10000) # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)    # 血糖二分类
-tt$bmi1 <- cut(tt$bmi, breaks = c(-Inf,18.5,24,28,Inf), labels = FALSE) # BMI四分类
-tt$pressure <- ifelse(tt$SBP >= 140 | tt$DBP >= 90, 1, 0) # 高血压二分类
-tt$income1[tt$income >= 6] <- 3               # income高组
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2 # income中组
-tt$income1[tt$income <= 2] <- 1               # income低组
-varsToFactor <- c("sex","huji","marriage","income1","sugar1","pressure","bmi1") # 指定分类变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor) # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2,1,3,4,5)) # 调整 marriage 参考水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2,1,3,4))       # 调整 bmi1 参考水平
-tt$insomnia1 <- recode_factor(tt$insomnia, "1" = 1, "2" = 0) # 将失眠结局重编码为0/1因子
-tt1 <- na.omit(tt)                            # 删除缺失记录，形成分析数据
-str(tt1)                                      # 检查分析数据结构
-```
-
-```{r demo19-paired-1-solution}
-library(dplyr)                              # 加载 dplyr
-elder1 <- read.csv("elder1.csv")            # 导入 elder1
-elder2 <- read.csv("elder2.csv")            # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID") # 按 ID 合并
-tt <- mutate(tt, bmi = weight / height^2 * 10000) # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)    # 血糖二分类
-tt$bmi1 <- cut(tt$bmi, breaks = c(-Inf,18.5,24,28,Inf), labels = FALSE) # BMI四分类
-tt$pressure <- ifelse(tt$SBP >= 140 | tt$DBP >= 90, 1, 0) # 高血压二分类
-tt$income1[tt$income >= 6] <- 3               # income高组
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2 # income中组
-tt$income1[tt$income <= 2] <- 1               # income低组
-varsToFactor <- c("sex","huji","marriage","income1","sugar1","pressure","bmi1") # 指定分类变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor) # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2,1,3,4,5)) # 调整 marriage 参考水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2,1,3,4))       # 调整 bmi1 参考水平
-tt$insomnia1 <- recode_factor(tt$insomnia, "1" = 1, "2" = 0) # 将失眠结局重编码为0/1因子
-tt1 <- na.omit(tt)                            # 删除缺失记录，形成分析数据
-str(tt1)                                      # 检查分析数据结构
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习1：准备logistic分析数据
-
-**任务：** 完成 Word 的数据整理流程，最终生成完整案例数据 `tt1`，结局变量为 `insomnia1`。
-
-```{r ex19-1-setup, include=FALSE}
-r1820_prepare_workdir()
-```
-
-```{r ex19-1, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex19-1-hint}
-library(dplyr)                              # 加载 dplyr
-elder1 <- read.csv("elder1.csv")            # 导入 elder1
-elder2 <- read.csv("elder2.csv")            # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID") # 按 ID 合并
-tt <- mutate(tt, bmi = weight / height^2 * 10000) # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)    # 血糖二分类
-tt$bmi1 <- cut(tt$bmi, breaks = c(-Inf,18.5,24,28,Inf), labels = FALSE) # BMI四分类
-tt$pressure <- ifelse(tt$SBP >= 140 | tt$DBP >= 90, 1, 0) # 高血压二分类
-tt$income1[tt$income >= 6] <- 3               # income高组
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2 # income中组
-tt$income1[tt$income <= 2] <- 1               # income低组
-varsToFactor <- c("sex","huji","marriage","income1","sugar1","pressure","bmi1") # 指定分类变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor) # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2,1,3,4,5)) # 调整 marriage 参考水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2,1,3,4))       # 调整 bmi1 参考水平
-tt$insomnia1 <- recode_factor(tt$insomnia, "1" = 1, "2" = 0) # 将失眠结局重编码为0/1因子
-tt1 <- na.omit(tt)                            # 删除缺失记录，形成分析数据
-str(tt1)                                      # 检查分析数据结构
-```
-
-```{r ex19-1-solution}
-library(dplyr)                              # 加载 dplyr
-elder1 <- read.csv("elder1.csv")            # 导入 elder1
-elder2 <- read.csv("elder2.csv")            # 导入 elder2
-tt <- inner_join(elder1, elder2, by = "ID") # 按 ID 合并
-tt <- mutate(tt, bmi = weight / height^2 * 10000) # 计算 BMI
-tt$sugar1 <- ifelse(tt$sugar > 7.0, 1, 0)    # 血糖二分类
-tt$bmi1 <- cut(tt$bmi, breaks = c(-Inf,18.5,24,28,Inf), labels = FALSE) # BMI四分类
-tt$pressure <- ifelse(tt$SBP >= 140 | tt$DBP >= 90, 1, 0) # 高血压二分类
-tt$income1[tt$income >= 6] <- 3               # income高组
-tt$income1[tt$income >= 3 & tt$income <= 5] <- 2 # income中组
-tt$income1[tt$income <= 2] <- 1               # income低组
-varsToFactor <- c("sex","huji","marriage","income1","sugar1","pressure","bmi1") # 指定分类变量
-tt[varsToFactor] <- lapply(tt[varsToFactor], factor) # 批量因子化
-tt$marriage <- factor(tt$marriage, levels = c(2,1,3,4,5)) # 调整 marriage 参考水平
-tt$bmi1 <- factor(tt$bmi1, levels = c(2,1,3,4))       # 调整 bmi1 参考水平
-tt$insomnia1 <- recode_factor(tt$insomnia, "1" = 1, "2" = 0) # 将失眠结局重编码为0/1因子
-tt1 <- na.omit(tt)                            # 删除缺失记录，形成分析数据
-str(tt1)                                      # 检查分析数据结构
-```
-
-```{r ex19-1-check}
-gradethis::grade_code()
-```
-
-</div>
-### 二、logistic回归分析
-<div class="module-explain">
-
-Logistic 回归使用 `glm()`，公式仍是 `结局 ~ 自变量1 + 自变量2`，并通过 `family = binomial(link = "logit")` 指定二项分布和 logit 链接。Word 原稿这一行存在缺失引号：`link =logit")`，以及 `summary(glm.log")` 的多余引号；互动代码使用正确 R 语法。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例2：建立logistic模型</div>
-
-```{r demo19-glm-setup, include=FALSE}
-r1820_replay("ex19-1")
-```
-
-```{r demo19-glm, exercise=TRUE}
-glm.log <- glm(
-  insomnia1 ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  family = binomial(link = "logit"),  # 指定二项 Logistic 回归
-  data = tt1
-)
-summary(glm.log)                       # 查看完整模型结果
-glm.step <- step(glm.log)              # 开展逐步回归
-summary(glm.step)                      # 查看逐步模型
-```
-
-```{r demo19-glm-solution}
-glm.log <- glm(
-  insomnia1 ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  family = binomial(link = "logit"),  # 指定二项 Logistic 回归
-  data = tt1
-)
-summary(glm.log)                       # 查看完整模型结果
-glm.step <- step(glm.log)              # 开展逐步回归
-summary(glm.step)                      # 查看逐步模型
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习2：建立logistic逐步模型
-
-**任务：** 基于练习1的 `tt1`，建立 Word 中的 logistic 模型 `glm.log`，再用 `step()` 得到 `glm.step`。
-
-```{r ex19-2-setup, include=FALSE}
-r1820_replay("ex19-1")
-```
-
-```{r ex19-2, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex19-2-hint}
-glm.log <- glm(
-  insomnia1 ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  family = binomial(link = "logit"),  # Logistic 回归
-  data = tt1
-)
-glm.step <- step(glm.log)              # 逐步回归
-summary(glm.step)                      # 查看最终模型
-```
-
-```{r ex19-2-solution}
-glm.log <- glm(
-  insomnia1 ~ sex + huji + marriage + TC + TG + sugar1 + bmi1 + pressure + income1,
-  family = binomial(link = "logit"),  # Logistic 回归
-  data = tt1
-)
-glm.step <- step(glm.log)              # 逐步回归
-summary(glm.step)                      # 查看最终模型
-```
-
-```{r ex19-2-check}
-gradethis::grade_code()
-```
-
-</div>
-### 三、结果导出、OR值与95%CI
-<div class="module-explain">
-
-`coef(summary(glm.step))` 提取系数表；`exp(coef())` 把 log-odds 系数指数化得到 OR；`exp(confint())` 得到指数化后的置信区间。Word 中 `[ ,c(1-7)]` 同样不是有效的“1到7列”表达，本教程使用完整系数表。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例3：提取系数、OR与置信区间</div>
-
-```{r demo19-or-setup, include=FALSE}
-r1820_replay(c("ex19-1", "ex19-2"))
-```
-
-```{r demo19-or, exercise=TRUE}
-dd <- coef(summary(glm.step))   # 提取 logistic 系数表
-write.csv(dd, file = "dd.csv")  # 导出系数表
-exp(coef(glm.step))              # 计算 OR = exp(beta)
-exp(confint(glm.step))           # 计算 OR 的 95% 置信区间
-```
-
-```{r demo19-or-solution}
-dd <- coef(summary(glm.step))   # 提取 logistic 系数表
-write.csv(dd, file = "dd.csv")  # 导出系数表
-exp(coef(glm.step))              # 计算 OR = exp(beta)
-exp(confint(glm.step))           # 计算 OR 的 95% 置信区间
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习3：计算OR与95%CI
-
-**任务：** 基于练习2的 `glm.step`，计算 OR 和95%CI，并把系数表保存为 `dd`。
-
-```{r ex19-3-setup, include=FALSE}
-r1820_replay(c("ex19-1", "ex19-2"))
-```
-
-```{r ex19-3, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex19-3-hint}
-dd <- coef(summary(glm.step))  # 提取系数表
-exp(coef(glm.step))             # 计算 OR
-exp(confint(glm.step))          # 计算 OR 的95%CI
-dd                              # 查看系数表
-```
-
-```{r ex19-3-solution}
-dd <- coef(summary(glm.step))  # 提取系数表
-exp(coef(glm.step))             # 计算 OR
-exp(confint(glm.step))          # 计算 OR 的95%CI
-dd                              # 查看系数表
-```
-
-```{r ex19-3-check}
-gradethis::grade_code()
-```
-
-</div>
-#### 更多模型输出
-<div class="module-explain">
-
-Word 还演示 `fitted()`、`residuals()`、`predict(type="response")` 与残差图。原稿里把预测向量也命名为 `tt`，会覆盖数据框；为避免破坏后续对象，本教程按练习顺序使用 `pred1` 保存预测概率。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例4：预测值和残差</div>
-
-```{r demo19-predict-setup, include=FALSE}
-r1820_replay(c("ex19-1", "ex19-2"))
-```
-
-```{r demo19-predict, exercise=TRUE}
-fitted(glm.step)                             # 提取模型拟合概率
-residuals(glm.step)                          # 提取残差
-pred1 <- predict(glm.step, type = "response") # 计算阳性事件预测概率
-plot(pred1, residuals(glm.step, type = "deviance")) # 绘制预测概率与偏差残差图
-```
-
-```{r demo19-predict-solution}
-fitted(glm.step)                             # 提取模型拟合概率
-residuals(glm.step)                          # 提取残差
-pred1 <- predict(glm.step, type = "response") # 计算阳性事件预测概率
-plot(pred1, residuals(glm.step, type = "deviance")) # 绘制预测概率与偏差残差图
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习4：预测与残差
-
-**任务：** 基于练习2的 `glm.step`，生成预测概率 `pred1`，并绘制预测概率与偏差残差图。
-
-```{r ex19-4-setup, include=FALSE}
-r1820_replay(c("ex19-1", "ex19-2"))
-```
-
-```{r ex19-4, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex19-4-hint}
-pred1 <- predict(glm.step, type = "response")          # 生成预测概率
-head(pred1)                                             # 查看前几个预测值
-plot(pred1, residuals(glm.step, type = "deviance"))     # 预测概率-偏差残差图
-```
-
-```{r ex19-4-solution}
-pred1 <- predict(glm.step, type = "response")          # 生成预测概率
-head(pred1)                                             # 查看前几个预测值
-plot(pred1, residuals(glm.step, type = "deviance"))     # 预测概率-偏差残差图
-```
-
-```{r ex19-4-check}
-gradethis::grade_code()
-```
-
-</div>
-### 四、broom包在回归分析中的应用
-<div class="module-explain">
-
-`broom` 把模型对象整理为规则数据框：`tidy()` 整理系数层面的结果，`glance()` 整理模型整体指标，`augment()` 把预测值、残差等个体层面结果加回数据。Word 认为这有利于后续统计表制作和导出。
-
-</div>
-```{r static19-broom-install, eval=FALSE, echo=TRUE}
-install.packages("broom")  # 首次使用时安装 broom
-library(broom)              # 加载 broom
-```
-<div class="module-example">
-
-<div class="module-label">示例5：tidy、glance、augment</div>
-
-```{r demo19-broom-setup, include=FALSE}
-r1820_replay(c("ex19-1", "ex19-2"))
-```
-
-```{r demo19-broom, exercise=TRUE}
-library(broom)                         # 加载 broom
-b1 <- tidy(glm.step)                   # 整理回归系数为数据框
-b1                                      # 查看 tidy 结果
-write.csv(b1, file = "b1.csv", row.names = FALSE) # 导出 tidy 结果
-glance(glm.step)                       # 提取模型整体指标
-b2 <- augment(glm.step, tt1)           # 把预测值、残差等加入个体数据
-str(b2)                                 # 查看扩增数据结构
-```
-
-```{r demo19-broom-solution}
-library(broom)                         # 加载 broom
-b1 <- tidy(glm.step)                   # 整理回归系数为数据框
-b1                                      # 查看 tidy 结果
-write.csv(b1, file = "b1.csv", row.names = FALSE) # 导出 tidy 结果
-glance(glm.step)                       # 提取模型整体指标
-b2 <- augment(glm.step, tt1)           # 把预测值、残差等加入个体数据
-str(b2)                                 # 查看扩增数据结构
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习5：用broom整理模型
-
-**任务：** 基于练习2的 `glm.step`，用 `tidy()` 保存为 `b1`，用 `glance()` 查看整体结果，并用 `augment()` 生成 `b2`。
-
-```{r ex19-5-setup, include=FALSE}
-r1820_replay(c("ex19-1", "ex19-2"))
-```
-
-```{r ex19-5, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex19-5-hint}
-library(broom)               # 加载 broom
-b1 <- tidy(glm.step)         # 整理系数结果
-b1                            # 查看 b1
-glance(glm.step)             # 查看模型整体指标
-b2 <- augment(glm.step, tt1) # 加入个体预测值与残差
-str(b2)                       # 查看 b2 结构
-```
-
-```{r ex19-5-solution}
-library(broom)               # 加载 broom
-b1 <- tidy(glm.step)         # 整理系数结果
-b1                            # 查看 b1
-glance(glm.step)             # 查看模型整体指标
-b2 <- augment(glm.step, tt1) # 加入个体预测值与残差
-str(b2)                       # 查看 b2 结构
-```
-
-```{r ex19-5-check}
-gradethis::grade_code()
-```
-
-</div>
-<div class="copy-area">
-
-### 第19讲：练习参考代码
-
-```{r r1820-copy-server-19, context="server", include=FALSE}
-observeEvent(input$r1820_copy_19, {
-  code <- c(
-    "# 练习1：准备分析数据",
-    "library(dplyr)  # 加载dplyr",
-    "elder1 <- read.csv(\"elder1.csv\")  # 导入elder1",
-    "elder2 <- read.csv(\"elder2.csv\")  # 导入elder2",
-    "tt <- inner_join(elder1,elder2,by=\"ID\")  # 合并",
-    "tt <- mutate(tt,bmi=weight/height^2*10000)  # BMI",
-    "tt$sugar1 <- ifelse(tt$sugar>7,1,0)  # 血糖二分类",
-    "tt$bmi1 <- cut(tt$bmi,breaks=c(-Inf,18.5,24,28,Inf),labels=FALSE)  # BMI四分类",
-    "tt$pressure <- ifelse(tt$SBP>=140 | tt$DBP>=90,1,0)  # 高血压",
-    "tt$income1[tt$income>=6] <- 3  # income高组",
-    "tt$income1[tt$income>=3 & tt$income<=5] <- 2  # income中组",
-    "tt$income1[tt$income<=2] <- 1  # income低组",
-    "varsToFactor <- c(\"sex\",\"huji\",\"marriage\",\"income1\",\"sugar1\",\"pressure\",\"bmi1\")  # 分类变量",
-    "tt[varsToFactor] <- lapply(tt[varsToFactor],factor)  # 因子化",
-    "tt$marriage <- factor(tt$marriage,levels=c(2,1,3,4,5))  # 参考水平",
-    "tt$bmi1 <- factor(tt$bmi1,levels=c(2,1,3,4))  # 参考水平",
-    "tt$insomnia1 <- recode_factor(tt$insomnia,\"1\"=1,\"2\"=0)  # 结局重编码",
-    "tt1 <- na.omit(tt)  # 删除缺失",
-    "",
-    "# 练习2：logistic逐步模型",
-    "glm.log <- glm(insomnia1~sex+huji+marriage+TC+TG+sugar1+bmi1+pressure+income1,family=binomial(link=\"logit\"),data=tt1)  # logistic回归",
-    "glm.step <- step(glm.log)  # 逐步回归",
-    "summary(glm.step)  # 查看模型",
-    "",
-    "# 练习3：OR与CI",
-    "dd <- coef(summary(glm.step))  # 系数表",
-    "exp(coef(glm.step))  # OR",
-    "exp(confint(glm.step))  # 95%CI",
-    "",
-    "# 练习4：预测与残差",
-    "pred1 <- predict(glm.step,type=\"response\")  # 预测概率",
-    "plot(pred1,residuals(glm.step,type=\"deviance\"))  # 残差图",
-    "",
-    "# 练习5：broom",
-    "library(broom)  # 加载broom",
-    "b1 <- tidy(glm.step)  # 整理系数",
-    "glance(glm.step)  # 整体指标",
-    "b2 <- augment(glm.step,tt1)  # 扩增个体结果",
-    "str(b2)  # 查看结构"
-  )
-  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
-  output$r1820_copy_status_19 <- renderText("已复制本讲练习参考代码。")
-})
-```
-
-```{r r1820-copy-button-19, echo=FALSE}
-actionButton("r1820_copy_19", "复制本讲练习参考代码")
-br()
-textOutput("r1820_copy_status_19")
-```
-
-</div>
-
-## 第20讲 利用R语言进行生存分析
-### 引言
-<div class="module-explain">
-
-Word 用一个胰腺癌队列随访案例介绍生存分析。结局包括生存时间 `time` 和状态 `censor`，影响因素包括年龄、术中放化疗 `trt`、性别 `sex`、`bui`、`ch`、腹膜转移 `p`、`stage`。本讲学习 K-M 曲线、log-rank 检验、Cox 回归和 broom 结果整理。
-
-</div>
-### 一、案例与准备工作
-<div class="module-explain">
-
-需要 `survival` 做生存分析，`broom` 整理模型，SPSS 数据读取使用 `foreign`。Word 原稿把包名写成 `forgein`，这是拼写错误；R 中实际包名为 `foreign`，互动代码使用正确包名。
-
-</div>
-```{r static20-install, eval=FALSE, echo=TRUE}
-install.packages("survival")  # 首次使用时安装 survival
-install.packages("broom")     # 首次使用时安装 broom
-install.packages("foreign")   # 首次使用时安装 foreign（Word 原稿写作 forgein）
-library(survival)             # 加载生存分析包
-library(broom)                # 加载结果整理包
-library(foreign)              # 加载 SPSS 数据读取包
-```
-<div class="module-example">
-<div class="module-label">示例1：导入生存数据</div>
-
-```{r demo20-paired-1-setup, include=FALSE}
-r1820_prepare_workdir()
-read.spss <- function(file, ...) foreign::read.spss(r1820_resolve_path(file), ...)
-```
-
-```{r demo20-paired-1, exercise=TRUE}
-library(survival)                         # 加载生存分析包
-library(broom)                            # 加载结果整理包
-library(foreign)                          # 加载 SPSS 读取包
-pancer <- read.spss("pancer.sav", to.data.frame = TRUE) # 导入 SPSS 生存数据
-str(pancer)                               # 查看数据结构
-```
-
-```{r demo20-paired-1-solution}
-library(survival)                         # 加载生存分析包
-library(broom)                            # 加载结果整理包
-library(foreign)                          # 加载 SPSS 读取包
-pancer <- read.spss("pancer.sav", to.data.frame = TRUE) # 导入 SPSS 生存数据
-str(pancer)                               # 查看数据结构
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习1：导入生存数据
-
-**任务：** 加载 `survival`、`broom`、`foreign`，读取 `pancer.sav` 为数据框 `pancer` 并查看结构。
-
-```{r ex20-1-setup, include=FALSE}
-r1820_prepare_workdir()
-read.spss <- function(file, ...) foreign::read.spss(r1820_resolve_path(file), ...)
-```
-
-```{r ex20-1, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex20-1-hint}
-library(survival)                         # 加载生存分析包
-library(broom)                            # 加载结果整理包
-library(foreign)                          # 加载 SPSS 读取包
-pancer <- read.spss("pancer.sav", to.data.frame = TRUE) # 导入 SPSS 生存数据
-str(pancer)                               # 查看数据结构
-```
-
-```{r ex20-1-solution}
-library(survival)                         # 加载生存分析包
-library(broom)                            # 加载结果整理包
-library(foreign)                          # 加载 SPSS 读取包
-pancer <- read.spss("pancer.sav", to.data.frame = TRUE) # 导入 SPSS 生存数据
-str(pancer)                               # 查看数据结构
-```
-
-```{r ex20-1-check}
-gradethis::grade_code()
-```
-
-</div>
-### 二、数据整理
-<div class="module-explain">
-
-Word 中 `sex`、`trt`、`bui`、`ch`、`p`、`stage` 都作为分类变量，用 `lapply(..., factor)` 批量因子化。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例2：批量因子化</div>
-
-```{r demo20-factor-setup, include=FALSE}
-r1820_replay("ex20-1")
-```
-
-```{r demo20-factor, exercise=TRUE}
-fvars <- c("sex", "trt", "bui", "ch", "p", "stage")  # 指定分类变量
-pancer[fvars] <- lapply(pancer[fvars], factor)             # 批量转为因子
-sapply(pancer[fvars], is.factor)                            # 检查是否均为因子
-```
-
-```{r demo20-factor-solution}
-fvars <- c("sex", "trt", "bui", "ch", "p", "stage")  # 指定分类变量
-pancer[fvars] <- lapply(pancer[fvars], factor)             # 批量转为因子
-sapply(pancer[fvars], is.factor)                            # 检查是否均为因子
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习2：因子化生存分析变量
-
-**任务：** 基于练习1的 `pancer`，把 `sex`、`trt`、`bui`、`ch`、`p`、`stage` 批量转为因子。
-
-```{r ex20-2-setup, include=FALSE}
-r1820_replay("ex20-1")
-```
-
-```{r ex20-2, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex20-2-hint}
-fvars <- c("sex", "trt", "bui", "ch", "p", "stage")  # 指定分类变量
-pancer[fvars] <- lapply(pancer[fvars], factor)             # 批量因子化
-sapply(pancer[fvars], is.factor)                            # 检查类型
-```
-
-```{r ex20-2-solution}
-fvars <- c("sex", "trt", "bui", "ch", "p", "stage")  # 指定分类变量
-pancer[fvars] <- lapply(pancer[fvars], factor)             # 批量因子化
-sapply(pancer[fvars], is.factor)                            # 检查类型
-```
-
-```{r ex20-2-check}
-gradethis::grade_code()
-```
-
-</div>
-### 三、K-M分析与log-rank检验
-<div class="module-explain">
-
-`Surv(time, censor)` 创建生存结局对象，`survfit()` 按组估计 K-M 生存曲线；`print()` 可查看中位生存时间等摘要，`summary()` 给出更细致的生存时间表，`plot()` 绘制曲线。组间生存曲线比较用 `survdiff()` 完成 log-rank 检验。
-
-</div>
-<div class="module-example">
-
-
-
-```{r demo20-km-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r demo20-km, exercise=TRUE}
-fit <- survfit(Surv(time, censor) ~ trt, data = pancer)  # 按 trt 估计 K-M 生存曲线
-print(fit)                                                # 查看中位生存时间等摘要
-summary(fit)                                              # 查看详细生存表
-plot(fit, main = "Kaplan-Meier curves", xlab = "time", ylab = "Overall Survival") # 绘制生存曲线
-survdiff(Surv(time, censor) ~ trt, data = pancer)         # log-rank 检验
-```
-
-```{r demo20-km-solution}
-fit <- survfit(Surv(time, censor) ~ trt, data = pancer)  # 按 trt 估计 K-M 生存曲线
-print(fit)                                                # 查看中位生存时间等摘要
-summary(fit)                                              # 查看详细生存表
-plot(fit, main = "Kaplan-Meier curves", xlab = "time", ylab = "Overall Survival") # 绘制生存曲线
-survdiff(Surv(time, censor) ~ trt, data = pancer)         # log-rank 检验
-```
-
-</div>
-<div class="module-example">
-<div class="module-label">示例3：K-M分析</div>
-
-```{r demo20-paired-3-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r demo20-paired-3, exercise=TRUE}
-fit <- survfit(Surv(time, censor) ~ trt, data = pancer)  # 建立 K-M 模型
-print(fit)                                                # 查看摘要
-plot(fit, main = "Kaplan-Meier curves", xlab = "time", ylab = "Overall Survival") # 绘制曲线
-```
-
-```{r demo20-paired-3-solution}
-fit <- survfit(Surv(time, censor) ~ trt, data = pancer)  # 建立 K-M 模型
-print(fit)                                                # 查看摘要
-plot(fit, main = "Kaplan-Meier curves", xlab = "time", ylab = "Overall Survival") # 绘制曲线
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习3：K-M分析
-
-**任务：** 基于练习2的 `pancer`，按 `trt` 建立 K-M 模型 `fit`，查看摘要并绘图。
-
-```{r ex20-3-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r ex20-3, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex20-3-hint}
-fit <- survfit(Surv(time, censor) ~ trt, data = pancer)  # 建立 K-M 模型
-print(fit)                                                # 查看摘要
-plot(fit, main = "Kaplan-Meier curves", xlab = "time", ylab = "Overall Survival") # 绘制曲线
-```
-
-```{r ex20-3-solution}
-fit <- survfit(Surv(time, censor) ~ trt, data = pancer)  # 建立 K-M 模型
-print(fit)                                                # 查看摘要
-plot(fit, main = "Kaplan-Meier curves", xlab = "time", ylab = "Overall Survival") # 绘制曲线
-```
-
-```{r ex20-3-check}
-gradethis::grade_code()
-```
-
-</div>
-<div class="module-example">
-<div class="module-label">示例4：log-rank检验</div>
-
-```{r demo20-paired-4-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r demo20-paired-4, exercise=TRUE}
-survdiff(Surv(time, censor) ~ trt, data = pancer)  # 用 log-rank 检验比较 trt 组
-```
-
-```{r demo20-paired-4-solution}
-survdiff(Surv(time, censor) ~ trt, data = pancer)  # 用 log-rank 检验比较 trt 组
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习4：log-rank检验
-
-**任务：** 基于练习2的 `pancer`，比较不同 `trt` 组的生存曲线。
-
-```{r ex20-4-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r ex20-4, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex20-4-hint}
-survdiff(Surv(time, censor) ~ trt, data = pancer)  # 用 log-rank 检验比较 trt 组
-```
-
-```{r ex20-4-solution}
-survdiff(Surv(time, censor) ~ trt, data = pancer)  # 用 log-rank 检验比较 trt 组
-```
-
-```{r ex20-4-check}
-gradethis::grade_code()
-```
-
-</div>
-### 四、Cox回归分析
-<div class="module-explain">
-
-Cox 比例风险回归使用 `coxph()`。Word 模型把 `Surv(time,censor)` 作为结局，纳入 `age+sex+bui+ch+p+stage+trt`。`summary()` 查看模型；`coef(summary())` 提取关键系数；`exp(coef())` 得到 HR；`exp(confint())` 得到 HR 的95%CI。
-
-</div>
-<div class="module-example">
-
-<div class="module-label">示例5：Cox回归与HR</div>
-
-```{r demo20-cox-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r demo20-cox, exercise=TRUE}
-mycox <- coxph(
-  Surv(time, censor) ~ age + sex + bui + ch + p + stage + trt,
-  data = pancer
-)                             # 建立多因素 Cox 回归
-summary(mycox)                # 查看完整模型结果
-coef(summary(mycox))          # 提取关键系数表
-exp(coef(mycox))              # 计算 HR
-exp(confint(mycox))           # 计算 HR 的95%CI
-```
-
-```{r demo20-cox-solution}
-mycox <- coxph(
-  Surv(time, censor) ~ age + sex + bui + ch + p + stage + trt,
-  data = pancer
-)                             # 建立多因素 Cox 回归
-summary(mycox)                # 查看完整模型结果
-coef(summary(mycox))          # 提取关键系数表
-exp(coef(mycox))              # 计算 HR
-exp(confint(mycox))           # 计算 HR 的95%CI
-```
-
-</div>
-<div class="module-exercise">
-
-#### 练习5：Cox回归与broom整理
-
-**任务：** 基于练习2的 `pancer`，建立 Word 中的 Cox 模型 `mycox`，计算 HR/95%CI，并用 `tidy()`、`glance()`、`augment()` 整理结果。
-
-```{r ex20-5-setup, include=FALSE}
-r1820_replay(c("ex20-1", "ex20-2"))
-```
-
-```{r ex20-5, exercise=TRUE}
-# 在这里输入代码
-```
-
-```{r ex20-5-hint}
-mycox <- coxph(
-  Surv(time, censor) ~ age + sex + bui + ch + p + stage + trt,
-  data = pancer
-)                             # 建立 Cox 回归
-summary(mycox)                # 查看模型结果
-exp(coef(mycox))              # 计算 HR
-exp(confint(mycox))           # 计算 HR 的95%CI
-
-library(broom)                # 加载 broom
-tidy(mycox)                   # 整理 Cox 系数结果
-glance(mycox)                 # 提取模型整体指标
-pancer_aug <- augment(mycox, pancer) # 把预测/残差信息加入数据
-str(pancer_aug)               # 查看扩增后的数据
-```
-
-```{r ex20-5-solution}
-mycox <- coxph(
-  Surv(time, censor) ~ age + sex + bui + ch + p + stage + trt,
-  data = pancer
-)                             # 建立 Cox 回归
-summary(mycox)                # 查看模型结果
-exp(coef(mycox))              # 计算 HR
-exp(confint(mycox))           # 计算 HR 的95%CI
-
-library(broom)                # 加载 broom
-tidy(mycox)                   # 整理 Cox 系数结果
-glance(mycox)                 # 提取模型整体指标
-pancer_aug <- augment(mycox, pancer) # 把预测/残差信息加入数据
-str(pancer_aug)               # 查看扩增后的数据
-```
-
-```{r ex20-5-check}
-gradethis::grade_code()
-```
-
-</div>
-<div class="copy-area">
-
-### 第20讲：练习参考代码
-
-```{r r1820-copy-server-20, context="server", include=FALSE}
-observeEvent(input$r1820_copy_20, {
-  code <- c(
-    "# 练习1：导入生存数据",
-    "library(survival)  # 加载survival",
-    "library(broom)  # 加载broom",
-    "library(foreign)  # 加载foreign",
-    "pancer <- read.spss(\"pancer.sav\",to.data.frame=TRUE)  # 导入SPSS",
-    "str(pancer)  # 查看结构",
-    "",
-    "# 练习2：因子化",
-    "fvars <- c(\"sex\",\"trt\",\"bui\",\"ch\",\"p\",\"stage\")  # 分类变量",
-    "pancer[fvars] <- lapply(pancer[fvars],factor)  # 批量因子化",
-    "sapply(pancer[fvars],is.factor)  # 检查",
-    "",
-    "# 练习3：K-M",
-    "fit <- survfit(Surv(time,censor)~trt,data=pancer)  # K-M模型",
-    "print(fit)  # 查看摘要",
-    "plot(fit,main=\"Kaplan-Meier curves\",xlab=\"time\",ylab=\"Overall Survival\")  # 生存曲线",
-    "",
-    "# 练习4：log-rank",
-    "survdiff(Surv(time,censor)~trt,data=pancer)  # log-rank检验",
-    "",
-    "# 练习5：Cox+broom",
-    "mycox <- coxph(Surv(time,censor)~age+sex+bui+ch+p+stage+trt,data=pancer)  # Cox模型",
-    "summary(mycox)  # 查看模型",
-    "exp(coef(mycox))  # HR",
-    "exp(confint(mycox))  # HR 95%CI",
-    "library(broom)  # 加载broom",
-    "tidy(mycox)  # 整理系数",
-    "glance(mycox)  # 整体指标",
-    "pancer_aug <- augment(mycox,pancer)  # 扩增个体结果",
-    "str(pancer_aug)  # 查看结构"
-  )
-  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
-  output$r1820_copy_status_20 <- renderText("已复制本讲练习参考代码。")
-})
-```
-
-```{r r1820-copy-button-20, echo=FALSE}
-actionButton("r1820_copy_20", "复制本讲练习参考代码")
-br()
-textOutput("r1820_copy_status_20")
+textOutput("r2426_copy_status_26")
 ```
 
 </div>
