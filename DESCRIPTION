@@ -1,0 +1,47 @@
+Package: RMedLearn
+Title: Interactive R Learning for Medical and Public Health Statistics
+Version: 0.2.0
+Authors@R:
+    person(
+      "Yuxin",
+      "Huang",
+      email = "2423692534@qq.com",
+      role = c("aut", "cre")
+    )
+Description: Provides interactive tutorials for learning R programming,
+    data management, statistical analysis, regression, survival analysis,
+    and data visualization in medical and public health education.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports:
+    base64enc,
+    digest,
+    jsonlite,
+    learnr,
+    rmarkdown,
+    shiny,
+    survival
+Suggests:
+    broom,
+    car,
+    clipr,
+    dplyr,
+    foreign,
+    gapminder,
+    ggplot2,
+    ggpubr,
+    gmodels,
+    gradethis,
+    haven,
+    Hmisc,
+    magrittr,
+    nortest,
+    pROC,
+    readxl,
+    reshape,
+    scales,
+    tidyr
+Remotes:
+    rstudio/gradethis
