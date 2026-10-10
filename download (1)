@@ -1,0 +1,10 @@
+^\.git$
+^\.gitignore$
+^\.Rhistory$
+^\.RData$
+^\.Ruserdata$
+^\.Renviron$
+^\.Rproj\.user$
+^.*\.Rproj$
+^README\.md$
+^LICENSE\.md$

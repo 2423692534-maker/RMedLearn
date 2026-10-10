@@ -1,0 +1,1635 @@
+---
+title: "R语言基础教程（第15-17讲）"
+tutorial:
+  id: "r-language-course-15-17"
+  version: "v9"
+output:
+  learnr::tutorial:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+runtime: shiny_prerendered
+---
+
+```{r setup, include=FALSE}
+library(learnr)
+library(gradethis)
+library(clipr)
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+options(tutorial.storage = list(
+  save_object = function(tutorial_id, tutorial_version, user_id, object_id, data) invisible(NULL),
+  get_object = function(tutorial_id, tutorial_version, user_id, object_id) NULL,
+  get_objects = function(tutorial_id, tutorial_version, user_id) list(),
+  remove_all_objects = function(tutorial_id, tutorial_version, user_id) invisible(NULL)
+))
+learnr::tutorial_options(exercise.eval = FALSE)
+gradethis::gradethis_setup()
+.r1517_live_code <- new.env(parent = emptyenv())
+r1517_session_bucket <- function(session) {
+  if (is.null(session) || is.null(session$token)) stop("无法识别当前 learnr 会话，请重新打开教程后再试。", call. = FALSE)
+  key <- as.character(session$token)
+  if (!exists(key, envir = .r1517_live_code, inherits = FALSE)) assign(key, new.env(parent = emptyenv()), envir = .r1517_live_code)
+  get(key, envir = .r1517_live_code, inherits = FALSE)
+}
+
+r1517_extract_setwd_path <- function(code) {
+  exprs <- tryCatch(parse(text = paste(code, collapse = "\n")), error = function(e) NULL)
+  if (is.null(exprs)) return(NULL)
+  found <- NULL
+  walk_expr <- function(x) {
+    if (!is.null(found) || !is.call(x)) return(invisible(NULL))
+    if (identical(x[[1]], as.name("setwd")) && length(x) >= 2L) {
+      arg <- x[[2]]
+      if (is.character(arg) && length(arg) == 1L) { found <<- arg; return(invisible(NULL)) }
+    }
+    for (part in as.list(x)[-1]) walk_expr(part)
+    invisible(NULL)
+  }
+  for (expr in exprs) walk_expr(expr)
+  found
+}
+
+r1517_saved_workdir <- function() {
+  session <- shiny::getDefaultReactiveDomain()
+  if (is.null(session)) {
+    caller <- parent.frame()
+    if (exists("session", envir = caller, inherits = TRUE)) session <- get("session", envir = caller, inherits = TRUE)
+  }
+  bucket <- r1517_session_bucket(session)
+  if (!exists(".r1517_workdir", envir = bucket, inherits = FALSE)) {
+    stop("请先运行本文件开头的‘设置工作空间’示例，把 setwd() 改为你自己的课程数据文件夹并点击 Run Code。", call. = FALSE)
+  }
+  get(".r1517_workdir", envir = bucket, inherits = FALSE)
+}
+
+r1517_is_absolute_path <- function(path) {
+  is.character(path) && length(path) == 1L && grepl("^(?:[A-Za-z]:[/\\]|/|~[/\\]?)", path)
+}
+r1517_resolve_path <- function(path, workdir = r1517_saved_workdir()) {
+  if (!is.character(path) || length(path) != 1L || !nzchar(path)) return(path)
+  if (r1517_is_absolute_path(path)) return(path.expand(path))
+  file.path(workdir, path)
+}
+r1517_prepare_workdir <- function(envir = parent.frame()) {
+  workdir <- r1517_saved_workdir(); target <- envir
+  assign("getwd", local({ wd <- workdir; function() wd }), envir = target)
+  assign("read.csv", local({ wd <- workdir; function(file, ...) utils::read.csv(r1517_resolve_path(file, wd), ...) }), envir = target)
+  assign("read.table", local({ wd <- workdir; function(file, ...) utils::read.table(r1517_resolve_path(file, wd), ...) }), envir = target)
+  assign("write.csv", local({ wd <- workdir; function(x, file = "", ...) { out <- if (is.character(file) && length(file)==1L && nzchar(file)) r1517_resolve_path(file, wd) else file; utils::write.csv(x, file=out, ...) } }), envir = target)
+  invisible(workdir)
+}
+
+r1517_replay <- function(labels) {
+  labels <- as.character(labels)
+  session <- shiny::getDefaultReactiveDomain()
+  if (is.null(session)) {
+    caller <- parent.frame()
+    if (exists("session", envir = caller, inherits = TRUE)) session <- get("session", envir = caller, inherits = TRUE)
+  }
+  bucket <- r1517_session_bucket(session)
+  r1517_prepare_workdir(envir = parent.frame())
+  for (label in labels) {
+    if (!exists(label, envir = bucket, inherits = FALSE)) stop(sprintf("请先完成前面的代码框（%s）并点击 Run Code。", label), call. = FALSE)
+    code <- paste(get(label, envir = bucket, inherits = FALSE), collapse = "\n")
+    if (!nzchar(trimws(code))) stop(sprintf("前面的代码框（%s）还没有可用代码。", label), call. = FALSE)
+    tryCatch(eval(parse(text = code), envir = parent.frame()), error = function(e) stop(sprintf("前面的代码框（%s）运行有误，请先返回修正。原错误：%s", label, conditionMessage(e)), call. = FALSE))
+  }
+  invisible(TRUE)
+}
+```
+
+```{r r1517-track-live-code, context="server-start", include=FALSE}
+learnr::event_register_handler("exercise_result", function(session, event, data) {
+  if (!is.null(data$label) && !is.null(data$code)) {
+    bucket <- r1517_session_bucket(session)
+    assign(data$label, data$code, envir = bucket)
+    
+    # 当学生完成“设置工作空间”代码框后，记录其实际设置的目录。
+    if (identical(data$label, "r1517-prep-workdir")) {
+      wd <- r1517_extract_setwd_path(data$code)
+
+      if (!is.null(wd) && dir.exists(path.expand(wd))) {
+        wd <- normalizePath(
+          path.expand(wd),
+          winslash = "/",
+          mustWork = TRUE
+        )
+
+        assign(".r1517_workdir", wd, envir = bucket)
+
+        # RMedLearn 安装包中已经内置 elder1.csv 与 elder2.csv。
+        # 学生成功设置工作空间后，将这两个数据文件自动准备到该目录。
+        # overwrite = FALSE：若目录中已有同名文件，则保留学生原文件，不覆盖。
+        prepare_fun <- getFromNamespace(
+          "prepare_tutorial_data",
+          "RMedLearn"
+        )
+
+        prepare_fun(
+          path = wd,
+          files = c("elder1.csv", "elder2.csv"),
+          overwrite = FALSE
+        )
+      }
+    }
+  }
+})
+```
+
+
+```{r course-cleanup-prerender, context="server", include=FALSE}
+# shiny_prerendered 在 Run Document 启动时会临时生成同名 HTML。
+# 这里在当前浏览器会话结束时清理该 HTML 及 _files/_cache/_data 配套目录。
+# 注意：session 只在 context="server" 中可用，不能在 server-start 中直接调用。
+.course_rmd_path <- normalizePath(
+  file.path(getwd(), "tutorial.Rmd"),
+  winslash = "/",
+  mustWork = FALSE
+)
+
+session$onSessionEnded(function() {
+  try(rmarkdown::shiny_prerendered_clean(.course_rmd_path), silent = TRUE)
+})
+```
+
+<style>
+body, .main-container { color: #222222; }
+p, li, .module-explain, .module-example, .module-exercise, .module-summary, .section-note, .copy-area { line-height: 1.72; }
+h1, .section.level1 h1, .tutorial h1 { font-size: 32px !important; font-weight: 700 !important; color: #2B4057 !important; border-bottom: 2px solid #A8B3BF !important; padding-bottom: 10px !important; margin-top: 30px !important; }
+h2, .section.level2 h2 { font-size: 26px !important; font-weight: 700 !important; color: #2B4057 !important; border-bottom: 1px solid #D9DEE4; padding-bottom: 8px; margin-top: 34px !important; }
+h3, .section.level3 h3 { font-size: 21px !important; font-weight: 700 !important; color: #40566D !important; margin-top: 28px !important; }
+h4, .section.level4 h4 { font-size: 17px !important; font-weight: 700 !important; color: #333333 !important; margin-top: 18px !important; }
+.module-explain, .module-example, .module-summary { margin: 12px 0 18px 0; padding: 0; background: transparent; border: 0; border-radius: 0; }
+.module-exercise { margin: 18px 0 24px 0; padding: 18px 20px; background: #F2F3F4; border: 1px solid #D7DBDF; border-left: 1px solid #D7DBDF; border-radius: 5px; box-shadow: none; }
+.module-label { font-weight: 700; margin-bottom: 8px; color: #33485E; }
+.section-note { color: #555555; font-size: 0.96em; }
+.copy-area { margin: 22px 0 30px 0; padding: 0; background: transparent; border: 0; }
+
+
+/* ===== 页面布局：目录靠左、充分利用横向空间；顶部留白 36px ===== */
+@media screen and (min-width: 768px) {
+  .band {
+    padding-left: 1.2% !important;
+    padding-right: 1.2% !important;
+  }
+  .bandContent {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .topics {
+    width: 83.8% !important;
+  }
+  .topicsContainer {
+    width: 15% !important;
+    min-width: 210px !important;
+    margin-right: 1.2% !important;
+  }
+  .topicsList {
+    width: 15% !important;
+    min-width: 210px !important;
+    padding-left: 0 !important;
+    padding-top: 36px !important;
+  }
+}
+
+/* ===== 左侧课程标题：主标题/讲次拆成两行并居中 ===== */
+.tutorialTitle,
+.topicsHeader .tutorialTitle,
+.topicsListContainer .tutorialTitle {
+  font-size: 0 !important;
+  line-height: 1 !important;
+  font-weight: 700 !important;
+  color: #2B4057 !important;
+  text-align: center !important;
+  margin-top: 0 !important;
+  margin-bottom: 16px !important;
+  padding: 2px 4px 10px 4px !important;
+  border-bottom: none !important;
+  white-space: normal !important;
+}
+.tutorialTitle::before,
+.topicsHeader .tutorialTitle::before,
+.topicsListContainer .tutorialTitle::before {
+  content: "R语言基础教程";
+  display: block;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #2B4057;
+  text-align: center;
+}
+.tutorialTitle::after,
+.topicsHeader .tutorialTitle::after,
+.topicsListContainer .tutorialTitle::after {
+  content: "第15–17讲";
+  display: block;
+  margin-top: 6px;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #5B6B7B;
+  text-align: center;
+}
+
+/* ===== 统一目录：固定等高、真正垂直居中、无内层框 ===== */
+.topicsList .topic,
+.tutorial-is-bs3 .topicsList .topic {
+  height: 54px !important;
+  min-height: 54px !important;
+  max-height: 54px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: stretch !important;
+  padding: 0 10px !important;
+  margin: 0 0 8px 0 !important;
+  line-height: 1.30 !important;
+  font-size: 15px !important;
+  background-image: none !important;
+  background-color: #FFFFFF !important;
+  border: 1px solid #E3E6EA !important;
+  border-left: 1px solid #E3E6EA !important;
+  border-radius: 5px !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+.topicsList .topic.current,
+.tutorial-is-bs3 .topicsList .topic.current {
+  background-color: #EEF3F7 !important;
+  border-color: #D7DEE5 !important;
+  font-weight: 600 !important;
+}
+
+/* 链接本身只负责文字布局，不再生成第二层背景或边框。 */
+.topicsList .topic .nav-link,
+.topicsList .topic > a,
+.tutorial-is-bs3 .topicsList .topic .nav-link,
+.tutorial-is-bs3 .topicsList .topic > a {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  white-space: normal !important;
+  line-height: 1.30 !important;
+  overflow: hidden !important;
+  color: #4A5560 !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 任何 hover / focus / active 状态都不再给链接自身加“框中框”。 */
+.topicsList .topic .nav-link:hover,
+.topicsList .topic .nav-link:focus,
+.topicsList .topic .nav-link:active,
+.topicsList .topic .nav-link.active,
+.topicsList .topic > a:hover,
+.topicsList .topic > a:focus,
+.topicsList .topic > a:active,
+.topicsList .topic.current .nav-link,
+.topicsList .topic.current > a {
+  color: #2B4057 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 隐藏知识点前的完成勾，不影响代码框按钮。 */
+.topicsList .topic .glyphicon-ok,
+.topicsList .topic .fa-check,
+.topicsList .topic .topic-checkmark,
+.topicsList .topic .topic-progress-icon,
+.topicsList .topic.completed::before,
+.topicsList .topic.complete::before,
+.topicsList .topic > a::before,
+.topicsList .topic > a::after,
+.section.level3 > h3::before,
+.section.level4 > h4::before { display: none !important; content: none !important; }
+</style>
+
+# 第15-17讲 统计描述、apply族与假设检验
+## 统一讲前准备
+<div class="module-explain">
+
+第15-17讲使用 `elder1.csv` 和 `elder2.csv` 完成医学数据的统计描述与推断。请先在下面把 `setwd()` 改成你自己的课程工作文件夹并运行；设置成功后，RMedLearn 会自动把包内的 `elder1.csv`、`elder2.csv` 复制到该文件夹（若已有同名文件则不会覆盖）。部分示例涉及 `dplyr`、`gmodels`、`nortest` 等扩展包；如果尚未安装，需要先在 RStudio Console 中安装一次。
+
+</div>
+<div class="module-example">
+
+```{r r1517-prep-workdir, exercise=TRUE}
+setwd("D:/R2022")  # 将路径改成你自己的课程数据文件夹
+getwd()          # 查看当前设置的工作空间
+```
+
+```{r r1517-prep-workdir-solution}
+setwd("D:/R2022")  # 将路径改成你自己的课程数据文件夹
+getwd()          # 查看当前设置的工作空间
+```
+
+</div>
+
+## 第15讲 常用统计描述方法
+### 引言
+<div class="module-explain">
+
+统计分析包括统计描述和统计推断。统计描述中，定量资料通常从集中趋势与离散趋势描述，如均数、标准差、中位数、四分位间距；分类资料主要描述样本量、率、比等。假设检验等统计推断将在第17讲继续。
+
+</div>
+### 讲前准备
+<div class="module-example">
+<div class="module-label">示例1：导入并合并数据</div>
+
+```{r demo15-paired-1-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r demo15-paired-1, exercise=TRUE}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
+```
+
+```{r demo15-paired-1-solution}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习1：导入并合并数据
+
+**任务：** 导入 `elder1.csv` 为 `t1`、`elder2.csv` 为 `t2`，按 `ID` 合并为 `tt`。
+
+```{r ex15-1-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r ex15-1, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex15-1-hint}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
+```
+
+```{r ex15-1-solution}
+t1 <- read.csv("elder1.csv")          # 导入 elder1
+t2 <- read.csv("elder2.csv")          # 导入 elder2
+tt <- merge(t1, t2, by = "ID")        # 按 ID 合并两个数据集
+dim(tt)                                # 查看合并后的维度
+```
+
+```{r ex15-1-check}
+gradethis::grade_code()
+```
+
+</div>
+### 一、定量资料的描述
+<div class="module-explain">
+
+Word 主要使用 `summary()`、`mean()`、`sd()`、`median()`、`IQR()`、`range()`。`na.rm = TRUE` 表示在计算时忽略缺失值。`summary()` 能一次给出数值变量的最小值、四分位数、中位数、均值、最大值等信息。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例2：定量资料描述</div>
+
+```{r demo15-quant-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r demo15-quant, exercise=TRUE}
+summary(tt[c("height", "weight")])  # 同时汇总身高和体重
+mean(tt$height, na.rm = TRUE)         # 计算身高均数，忽略缺失
+sd(tt$height, na.rm = TRUE)           # 计算身高标准差
+median(tt$height, na.rm = TRUE)       # 计算身高中位数
+IQR(tt$height, na.rm = TRUE)          # 计算身高四分位间距
+range(tt$height, na.rm = TRUE)        # 计算身高最小值和最大值
+```
+
+```{r demo15-quant-solution}
+summary(tt[c("height", "weight")])  # 同时汇总身高和体重
+mean(tt$height, na.rm = TRUE)         # 计算身高均数，忽略缺失
+sd(tt$height, na.rm = TRUE)           # 计算身高标准差
+median(tt$height, na.rm = TRUE)       # 计算身高中位数
+IQR(tt$height, na.rm = TRUE)          # 计算身高四分位间距
+range(tt$height, na.rm = TRUE)        # 计算身高最小值和最大值
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习2：描述身高
+
+**任务：** 基于练习1的 `tt`，计算 `height` 的均数、标准差、中位数、IQR 和范围，均忽略缺失值。
+
+```{r ex15-2-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r ex15-2, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex15-2-hint}
+mean(tt$height, na.rm = TRUE)    # 身高均数
+sd(tt$height, na.rm = TRUE)      # 身高标准差
+median(tt$height, na.rm = TRUE)  # 身高中位数
+IQR(tt$height, na.rm = TRUE)     # 身高四分位间距
+range(tt$height, na.rm = TRUE)   # 身高范围
+```
+
+```{r ex15-2-solution}
+mean(tt$height, na.rm = TRUE)    # 身高均数
+sd(tt$height, na.rm = TRUE)      # 身高标准差
+median(tt$height, na.rm = TRUE)  # 身高中位数
+IQR(tt$height, na.rm = TRUE)     # 身高四分位间距
+range(tt$height, na.rm = TRUE)   # 身高范围
+```
+
+```{r ex15-2-check}
+gradethis::grade_code()
+```
+
+</div>
+### 二、分类资料的描述
+<div class="module-explain">
+
+分类变量可用 `table()` 生成频数或列联表，用 `xtabs()` 根据公式生成交叉表，用 `prop.table()` 把频数转换为比例。Word 示例关注性别、睡眠和婚姻等变量。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例3：分类资料描述</div>
+
+```{r demo15-cat-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r demo15-cat, exercise=TRUE}
+table(tt$sex, tt$sleep)           # 制作 sex 与 sleep 的列联表
+xtabs(~ sex + marriage, data = tt) # 用公式制作 sex 与 marriage 的列联表
+prop.table(table(tt$sex))          # 计算 sex 各类别所占比例
+```
+
+```{r demo15-cat-solution}
+table(tt$sex, tt$sleep)           # 制作 sex 与 sleep 的列联表
+xtabs(~ sex + marriage, data = tt) # 用公式制作 sex 与 marriage 的列联表
+prop.table(table(tt$sex))          # 计算 sex 各类别所占比例
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习3：分类变量频数与比例
+
+**任务：** 基于练习1的 `tt`，计算 `sex` 的频数与比例，并制作 `sex` 与 `sleep` 的列联表。
+
+```{r ex15-3-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r ex15-3, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex15-3-hint}
+table(tt$sex)                    # 统计 sex 各类别频数
+prop.table(table(tt$sex))        # 计算 sex 各类别比例
+table(tt$sex, tt$sleep)          # 制作 sex 与 sleep 列联表
+```
+
+```{r ex15-3-solution}
+table(tt$sex)                    # 统计 sex 各类别频数
+prop.table(table(tt$sex))        # 计算 sex 各类别比例
+table(tt$sex, tt$sleep)          # 制作 sex 与 sleep 列联表
+```
+
+```{r ex15-3-check}
+gradethis::grade_code()
+```
+
+</div>
+### 三、dplyr包在统计描述中的应用
+<div class="module-explain">
+
+`dplyr` 中常用 `group_by()` 分组，`summarise()` 汇总。Word 列出可在汇总中使用的 `mean()`、`median()`、`max()`、`min()`、`sd()`、`IQR()`，以及 `first()`、`last()`、`nth()`、`n()`、`n_distinct()`。`n()` 相当于计算组内样本数，`n_distinct()` 计算不同取值数。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例4：分组统计描述</div>
+
+```{r demo15-dplyr-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r demo15-dplyr, exercise=TRUE}
+library(dplyr)  # 加载 dplyr
+
+summarise(
+  tt,
+  mean_height = mean(height, na.rm = TRUE),       # 全体身高均数
+  sd_height = sd(height, na.rm = TRUE),           # 全体身高标准差
+  median_height = median(height, na.rm = TRUE)    # 全体身高中位数
+)
+
+tt %>%
+  group_by(sex) %>%                                # 按 sex 分组
+  summarise(
+    n = n(),                                       # 每组人数
+    mean_height = mean(height, na.rm = TRUE),      # 每组身高均数
+    sd_height = sd(height, na.rm = TRUE),          # 每组身高标准差
+    median_height = median(height, na.rm = TRUE)   # 每组身高中位数
+  )
+```
+
+```{r demo15-dplyr-solution}
+library(dplyr)  # 加载 dplyr
+
+summarise(
+  tt,
+  mean_height = mean(height, na.rm = TRUE),       # 全体身高均数
+  sd_height = sd(height, na.rm = TRUE),           # 全体身高标准差
+  median_height = median(height, na.rm = TRUE)    # 全体身高中位数
+)
+
+tt %>%
+  group_by(sex) %>%                                # 按 sex 分组
+  summarise(
+    n = n(),                                       # 每组人数
+    mean_height = mean(height, na.rm = TRUE),      # 每组身高均数
+    sd_height = sd(height, na.rm = TRUE),          # 每组身高标准差
+    median_height = median(height, na.rm = TRUE)   # 每组身高中位数
+  )
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习4：按性别分组描述
+
+**任务：** 基于练习1的 `tt`，用 `dplyr` 按 `sex` 分组，计算人数、身高均数和标准差。
+
+```{r ex15-4-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r ex15-4, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex15-4-hint}
+library(dplyr)  # 加载 dplyr
+tt %>%
+  group_by(sex) %>%                               # 按 sex 分组
+  summarise(
+    n = n(),                                      # 计算每组人数
+    mean_height = mean(height, na.rm = TRUE),     # 计算每组身高均数
+    sd_height = sd(height, na.rm = TRUE)          # 计算每组身高标准差
+  )
+```
+
+```{r ex15-4-solution}
+library(dplyr)  # 加载 dplyr
+tt %>%
+  group_by(sex) %>%                               # 按 sex 分组
+  summarise(
+    n = n(),                                      # 计算每组人数
+    mean_height = mean(height, na.rm = TRUE),     # 计算每组身高均数
+    sd_height = sd(height, na.rm = TRUE)          # 计算每组身高标准差
+  )
+```
+
+```{r ex15-4-check}
+gradethis::grade_code()
+```
+
+</div>
+### 四、gmodels包在交叉表中的应用
+<div class="module-explain">
+
+Word 使用 `gmodels::CrossTable()` 同时给出交叉频数与行、列百分比。该函数来自 `gmodels` 扩展包。
+
+</div>
+```{r static15-gmodels-install, eval=FALSE, echo=TRUE}
+install.packages("gmodels")  # 首次使用时安装 gmodels
+library(gmodels)              # 加载 gmodels
+```
+<div class="module-example">
+
+<div class="module-label">示例5：CrossTable交叉表</div>
+
+```{r demo15-cross-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r demo15-cross, exercise=TRUE}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 计算 sex 与 sleep 的交叉表及百分比
+x                                        # 查看交叉表结果
+```
+
+```{r demo15-cross-solution}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 计算 sex 与 sleep 的交叉表及百分比
+x                                        # 查看交叉表结果
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习5：CrossTable
+
+**任务：** 基于练习1的 `tt`，加载 `gmodels`，用 `CrossTable()` 分析 `sex` 与 `sleep`。
+
+```{r ex15-5-setup, include=FALSE}
+r1517_replay("ex15-1")
+```
+
+```{r ex15-5, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex15-5-hint}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 生成交叉表并计算百分比
+x                                        # 查看结果
+```
+
+```{r ex15-5-solution}
+library(gmodels)                         # 加载 gmodels
+x <- CrossTable(tt$sex, tt$sleep)        # 生成交叉表并计算百分比
+x                                        # 查看结果
+```
+
+```{r ex15-5-check}
+gradethis::grade_code()
+```
+
+</div>
+<div class="copy-area">
+
+### 第15讲：练习参考代码
+
+```{r r1517-copy-server-15, context="server", include=FALSE}
+observeEvent(input$r1517_copy_15, {
+  code <- c(
+    "# 练习1：导入并合并",
+    "t1 <- read.csv(\"elder1.csv\")  # 导入elder1",
+    "t2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "tt <- merge(t1, t2, by = \"ID\")  # 按ID合并",
+    "",
+    "# 练习2：定量描述",
+    "mean(tt$height, na.rm = TRUE)  # 均数",
+    "sd(tt$height, na.rm = TRUE)  # 标准差",
+    "median(tt$height, na.rm = TRUE)  # 中位数",
+    "IQR(tt$height, na.rm = TRUE)  # 四分位间距",
+    "range(tt$height, na.rm = TRUE)  # 范围",
+    "",
+    "# 练习3：分类描述",
+    "table(tt$sex)  # sex频数",
+    "prop.table(table(tt$sex))  # sex比例",
+    "table(tt$sex, tt$sleep)  # 交叉表",
+    "",
+    "# 练习4：dplyr分组描述",
+    "library(dplyr)  # 加载dplyr",
+    "tt %>% group_by(sex) %>% summarise(n=n(), mean_height=mean(height,na.rm=TRUE), sd_height=sd(height,na.rm=TRUE))  # 分组汇总",
+    "",
+    "# 练习5：CrossTable",
+    "library(gmodels)  # 加载gmodels",
+    "x <- CrossTable(tt$sex, tt$sleep)  # 交叉表",
+    "x  # 查看结果"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r1517_copy_status_15 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r1517-copy-button-15, echo=FALSE}
+actionButton("r1517_copy_15", "复制本讲练习参考代码")
+br()
+textOutput("r1517_copy_status_15")
+```
+
+</div>
+
+## 第16讲 apply族函数的应用
+### 引言
+<div class="module-explain">
+
+apply 族函数可以把同一个函数批量作用到数据对象的多个行、列、元素或分组上，减少重复代码。Word 依次介绍 `apply()`、`lapply()`、`sapply()`、`tapply()`、`mapply()`，最后给出医学数据中的批量类型检查、因子化、分组描述和缺失值统计。
+
+</div>
+### 一、函数 apply()
+<div class="module-explain">
+
+基本格式为 `apply(x, MARGIN, FUN, ...)`。`MARGIN=1` 表示按行，`MARGIN=2` 表示按列；`FUN` 是要重复执行的函数。常用于矩阵或二维数据的行列汇总。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例1：按行和按列求均值</div>
+
+```{r demo16-apply, exercise=TRUE}
+x <- matrix(1:6, ncol = 2)  # 创建 3 行 2 列矩阵
+x                             # 查看矩阵
+apply(x, 1, mean)             # 对每一行计算均值
+apply(x, 2, mean)             # 对每一列计算均值
+```
+
+```{r demo16-apply-solution}
+x <- matrix(1:6, ncol = 2)  # 创建 3 行 2 列矩阵
+x                             # 查看矩阵
+apply(x, 1, mean)             # 对每一行计算均值
+apply(x, 2, mean)             # 对每一列计算均值
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习1：apply按行列计算
+
+**任务：** 创建矩阵 `x <- matrix(1:6,ncol=2)`，分别用 `apply()` 计算各行和各列均值。
+
+```{r ex16-1, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-1-hint}
+x <- matrix(1:6, ncol = 2)  # 创建矩阵
+apply(x, 1, mean)             # 按行计算均值
+apply(x, 2, mean)             # 按列计算均值
+```
+
+```{r ex16-1-solution}
+x <- matrix(1:6, ncol = 2)  # 创建矩阵
+apply(x, 1, mean)             # 按行计算均值
+apply(x, 2, mean)             # 按列计算均值
+```
+
+```{r ex16-1-check}
+gradethis::grade_code()
+```
+
+</div>
+### 二、函数 lapply()
+<div class="module-explain">
+
+`lapply(x, FUN, ...)` 对列表、数据框或向量的每个元素应用函数，结果总是列表。数据框在 R 中本质上也是一种列表，因此很适合逐列处理。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例2：对数据框每列处理</div>
+
+```{r demo16-lapply, exercise=TRUE}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 第一列数值
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 第二列数值
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 第三列数值
+)
+lapply(d1, mean)                 # 对每列计算均值，返回列表
+lapply(d1, factor)               # 把每列转换为因子，返回列表
+```
+
+```{r demo16-lapply-solution}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 第一列数值
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 第二列数值
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 第三列数值
+)
+lapply(d1, mean)                 # 对每列计算均值，返回列表
+lapply(d1, factor)               # 把每列转换为因子，返回列表
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习2：lapply计算列均值
+
+**任务：** 按 Word 示例创建 `d1`，用 `lapply()` 计算每列均值，保存为 `t1`。
+
+```{r ex16-2, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-2-hint}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 创建 x1
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 创建 x2
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 创建 x3
+)
+t1 <- lapply(d1, mean)          # 对每列计算均值并返回列表
+t1                              # 查看结果
+```
+
+```{r ex16-2-solution}
+d1 <- data.frame(
+  x1 = c(5.1, 4.9, 4.7, 4.6),  # 创建 x1
+  x2 = c(3.5, 3.0, 3.2, 3.1),  # 创建 x2
+  x3 = c(1.4, 1.4, 1.3, 1.5)   # 创建 x3
+)
+t1 <- lapply(d1, mean)          # 对每列计算均值并返回列表
+t1                              # 查看结果
+```
+
+```{r ex16-2-check}
+gradethis::grade_code()
+```
+
+</div>
+### 三、函数 sapply()
+<div class="module-explain">
+
+`sapply()` 与 `lapply()` 类似，但默认会尝试把结果简化为向量或矩阵。`simplify=FALSE` 时行为接近 `lapply()`；默认 `TRUE` 时，如果每个结果长度为1，通常简化为向量。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例3：sapply简化结果</div>
+
+```{r demo16-sapply-setup, include=FALSE}
+r1517_replay("ex16-2")
+```
+
+```{r demo16-sapply, exercise=TRUE}
+sapply(d1, mean)        # 每列均值，通常简化为数值向量
+sapply(d1, factor)      # 对每列因子化，结果按可简化形式返回
+sapply(d1, sd)          # 每列标准差
+sapply(d1, is.numeric)  # 判断每列是否为数值型
+```
+
+```{r demo16-sapply-solution}
+sapply(d1, mean)        # 每列均值，通常简化为数值向量
+sapply(d1, factor)      # 对每列因子化，结果按可简化形式返回
+sapply(d1, sd)          # 每列标准差
+sapply(d1, is.numeric)  # 判断每列是否为数值型
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习3：sapply批量统计
+
+**任务：** 基于练习2实际创建的 `d1`，分别用 `sapply()` 计算每列标准差并判断是否为数值型。
+
+```{r ex16-3-setup, include=FALSE}
+r1517_replay("ex16-2")
+```
+
+```{r ex16-3, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-3-hint}
+sapply(d1, sd)          # 计算各列标准差
+sapply(d1, is.numeric)  # 判断各列是否为数值型
+```
+
+```{r ex16-3-solution}
+sapply(d1, sd)          # 计算各列标准差
+sapply(d1, is.numeric)  # 判断各列是否为数值型
+```
+
+```{r ex16-3-check}
+gradethis::grade_code()
+```
+
+</div>
+### 四、函数 tapply()
+<div class="module-explain">
+
+`tapply(x, INDEX, FUN, ...)` 根据一个或多个分组因子，对向量分组后应用函数。`x` 是待分析向量，`INDEX` 是与其等长的分组变量。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例4：分组计算身高均值</div>
+
+```{r demo16-tapply, exercise=TRUE}
+height <- c(174, 165, 180, 171, 160)  # 创建身高向量
+sex <- c("F", "F", "M", "M", "F")     # 创建性别分组
+tapply(height, sex, mean)                 # 按 sex 分组计算身高均值
+```
+
+```{r demo16-tapply-solution}
+height <- c(174, 165, 180, 171, 160)  # 创建身高向量
+sex <- c("F", "F", "M", "M", "F")     # 创建性别分组
+tapply(height, sex, mean)                 # 按 sex 分组计算身高均值
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习4：tapply分组均值
+
+**任务：** 创建 Word 中的 `height` 和 `sex`，使用 `tapply()` 按性别计算身高均值。
+
+```{r ex16-4, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-4-hint}
+height <- c(174, 165, 180, 171, 160)  # 身高向量
+sex <- c("F", "F", "M", "M", "F")     # 性别分组
+tapply(height, sex, mean)                 # 分组计算均值
+```
+
+```{r ex16-4-solution}
+height <- c(174, 165, 180, 171, 160)  # 身高向量
+sex <- c("F", "F", "M", "M", "F")     # 性别分组
+tapply(height, sex, mean)                 # 分组计算均值
+```
+
+```{r ex16-4-check}
+gradethis::grade_code()
+```
+
+</div>
+### 五、函数 mapply()
+<div class="module-explain">
+
+`mapply()` 是 `sapply()` 的多参数版本，可以把多个参数位置同步送入同一个函数。`MoreArgs` 用于传入对每次调用都相同的额外参数。Word 用 `rep()` 演示不同重复次数。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例5：mapply多参数调用</div>
+
+```{r demo16-mapply, exercise=TRUE}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))       # 分别重复1、2、3次，结果长度不同
+mapply(rep, times = c(2, 2), MoreArgs = list(x = 1:2)) # 两次调用结果等长，可简化为矩阵
+```
+
+```{r demo16-mapply-solution}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))       # 分别重复1、2、3次，结果长度不同
+mapply(rep, times = c(2, 2), MoreArgs = list(x = 1:2)) # 两次调用结果等长，可简化为矩阵
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习5：mapply重复向量
+
+**任务：** 用 `mapply()` 将 `1:2` 分别重复1次、2次、3次。
+
+```{r ex16-5, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-5-hint}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))  # 对相同向量使用不同重复次数
+```
+
+```{r ex16-5-solution}
+mapply(rep, times = 1:3, MoreArgs = list(x = 1:2))  # 对相同向量使用不同重复次数
+```
+
+```{r ex16-5-check}
+gradethis::grade_code()
+```
+
+</div>
+### 六、医学数据分析中apply族的应用
+<div class="module-explain">
+
+Word 给出四类实际用途：
+
+1. `sapply(t1, class)` 批量查看变量类型；
+2. `sapply(t1, is.numeric)` 批量判断是否数值型；
+3. `lapply()` 把多个分类变量批量因子化；
+4. `tapply()` 分组求均值或计数；
+5. 自编缺失值计数函数再与 `apply()` 联用。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例6：批量处理医学数据</div>
+
+```{r demo16-medical-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r demo16-medical, exercise=TRUE}
+t1 <- read.csv("elder1.csv")  # 导入 elder1
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+
+sapply(t1, class)              # 批量查看每列类型
+sapply(t1, is.numeric)         # 批量判断每列是否数值型
+
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking") # 指定分类变量
+t2[vars] <- lapply(t2[vars], factor)  # 批量把指定变量转为因子
+
+tapply(t2$health, t2$sex, mean, na.rm = TRUE)  # 按 sex 计算 health 均值
+tapply(t2$marriage, t2$sex, table)              # 按 sex 分组统计 marriage
+```
+
+```{r demo16-medical-solution}
+t1 <- read.csv("elder1.csv")  # 导入 elder1
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+
+sapply(t1, class)              # 批量查看每列类型
+sapply(t1, is.numeric)         # 批量判断每列是否数值型
+
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking") # 指定分类变量
+t2[vars] <- lapply(t2[vars], factor)  # 批量把指定变量转为因子
+
+tapply(t2$health, t2$sex, mean, na.rm = TRUE)  # 按 sex 计算 health 均值
+tapply(t2$marriage, t2$sex, table)              # 按 sex 分组统计 marriage
+```
+
+</div>
+<div class="module-example">
+
+```{r demo16-nafun-setup, include=FALSE}
+r1517_prepare_workdir()
+t1 <- read.csv("elder1.csv")
+```
+
+```{r demo16-nafun, exercise=TRUE}
+naf <- function(x) {            # 定义计算缺失数量的函数
+  nas <- sum(is.na(x))           # 统计 x 中 NA 数量
+  return(nas)                    # 返回缺失数量
+}
+apply(t1, 2, naf)                # 对 t1 每一列应用 naf()
+```
+
+```{r demo16-nafun-solution}
+naf <- function(x) {            # 定义计算缺失数量的函数
+  nas <- sum(is.na(x))           # 统计 x 中 NA 数量
+  return(nas)                    # 返回缺失数量
+}
+apply(t1, 2, naf)                # 对 t1 每一列应用 naf()
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习6：批量因子化
+
+**任务：** 导入 `elder2.csv` 为 `t2`，把 `sex`、`marriage`、`education`、`huji`、`income`、`smoking` 用 `lapply()` 批量转为因子，并检查类型。
+
+```{r ex16-6-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r ex16-6, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex16-6-hint}
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking")  # 指定变量名
+t2[vars] <- lapply(t2[vars], factor)  # 批量因子化
+sapply(t2[vars], is.factor)           # 检查这些变量是否均为因子
+```
+
+```{r ex16-6-solution}
+t2 <- read.csv("elder2.csv")  # 导入 elder2
+vars <- c("sex", "marriage", "education", "huji", "income", "smoking")  # 指定变量名
+t2[vars] <- lapply(t2[vars], factor)  # 批量因子化
+sapply(t2[vars], is.factor)           # 检查这些变量是否均为因子
+```
+
+```{r ex16-6-check}
+gradethis::grade_code()
+```
+
+</div>
+<div class="copy-area">
+
+### 第16讲：练习参考代码
+
+```{r r1517-copy-server-16, context="server", include=FALSE}
+observeEvent(input$r1517_copy_16, {
+  code <- c(
+    "# 练习1：apply",
+    "x <- matrix(1:6, ncol=2)  # 创建矩阵",
+    "apply(x,1,mean)  # 按行均值",
+    "apply(x,2,mean)  # 按列均值",
+    "",
+    "# 练习2：lapply",
+    "d1 <- data.frame(x1=c(5.1,4.9,4.7,4.6), x2=c(3.5,3.0,3.2,3.1), x3=c(1.4,1.4,1.3,1.5))  # 创建数据框",
+    "t1 <- lapply(d1, mean)  # 每列均值",
+    "t1  # 查看结果",
+    "",
+    "# 练习3：sapply",
+    "sapply(d1, sd)  # 每列标准差",
+    "sapply(d1, is.numeric)  # 判断数值型",
+    "",
+    "# 练习4：tapply",
+    "height <- c(174,165,180,171,160)  # 身高",
+    "sex <- c(\"F\",\"F\",\"M\",\"M\",\"F\")  # 性别",
+    "tapply(height,sex,mean)  # 分组均值",
+    "",
+    "# 练习5：mapply",
+    "mapply(rep,times=1:3,MoreArgs=list(x=1:2))  # 不同重复次数",
+    "",
+    "# 练习6：批量因子化",
+    "t2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "vars <- c(\"sex\",\"marriage\",\"education\",\"huji\",\"income\",\"smoking\")  # 指定变量",
+    "t2[vars] <- lapply(t2[vars], factor)  # 批量因子化",
+    "sapply(t2[vars], is.factor)  # 检查因子"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r1517_copy_status_16 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r1517-copy-button-16, echo=FALSE}
+actionButton("r1517_copy_16", "复制本讲练习参考代码")
+br()
+textOutput("r1517_copy_status_16")
+```
+
+</div>
+
+## 第17讲 如何使用R语言进行假设检验
+### 引言
+<div class="module-explain">
+
+假设检验是统计推断的重要组成。Word 本讲依次介绍正态性检验、方差齐性检验、t检验、方差分析、卡方检验和秩和检验。选择检验方法前，应结合变量类型、分布、独立/配对设计和方差情况判断。
+
+</div>
+### 讲前准备
+<div class="module-example">
+<div class="module-label">示例1：导入并合并数据</div>
+
+```{r demo17-paired-1-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r demo17-paired-1, exercise=TRUE}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+```{r demo17-paired-1-solution}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习1：导入并合并数据
+
+**任务：** 导入 `elder1.csv`、`elder2.csv`，按 `ID` 合并为 `tt`，只保留共同ID。
+
+```{r ex17-1-setup, include=FALSE}
+r1517_prepare_workdir()
+```
+
+```{r ex17-1, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-1-hint}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+```{r ex17-1-solution}
+t1 <- read.csv("elder1.csv")                 # 导入 elder1
+t2 <- read.csv("elder2.csv")                 # 导入 elder2
+tt <- merge(t1, t2, by = "ID", all = FALSE)  # 按 ID 合并共同样本
+dim(tt)                                       # 查看 tt 维度
+```
+
+```{r ex17-1-check}
+gradethis::grade_code()
+```
+
+</div>
+### 一、正态性检验
+<div class="module-explain">
+
+Word 给出三种方法：小样本的 `shapiro.test()`、大样本的 Kolmogorov-Smirnov `ks.test()`、以及 `nortest` 包中的 `lillie.test()`。正态性检验结果不应只机械看 P 值，也应结合样本量和图形判断；本课程此处按 Word 讲代码用法。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例2：三种正态性检验</div>
+
+```{r demo17-normal-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-normal, exercise=TRUE}
+shapiro.test(tt$weight)       # Shapiro-Wilk 正态性检验
+ks.test(tt$weight, "pnorm")   # K-S 正态性检验（按 Word 写法）
+
+library(nortest)              # 加载 nortest 包
+lillie.test(tt$weight)         # Lilliefors 修正检验
+```
+
+```{r demo17-normal-solution}
+shapiro.test(tt$weight)       # Shapiro-Wilk 正态性检验
+ks.test(tt$weight, "pnorm")   # K-S 正态性检验（按 Word 写法）
+
+library(nortest)              # 加载 nortest 包
+lillie.test(tt$weight)         # Lilliefors 修正检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习2：正态性检验
+
+**任务：** 基于练习1的 `tt`，对 `weight` 做 Shapiro-Wilk 正态性检验。
+
+```{r ex17-2-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-2, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-2-hint}
+shapiro.test(tt$weight)  # 检验 weight 的正态性
+```
+
+```{r ex17-2-solution}
+shapiro.test(tt$weight)  # 检验 weight 的正态性
+```
+
+```{r ex17-2-check}
+gradethis::grade_code()
+```
+
+</div>
+### 二、方差齐性检验
+<div class="module-explain">
+
+两组或多组定量资料比较时，还需要考虑方差齐性。Word 给出 `var.test()` 和 `bartlett.test()`。原文在 `bartlett.test()` 前加载 `car`，但 `bartlett.test()` 本身来自 R 的 `stats` 包；课程保留 Word 的方法，同时互动代码直接调用该函数。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例3：方差齐性检验</div>
+
+```{r demo17-var-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-var, exercise=TRUE}
+var.test(height ~ sex, data = tt)       # 两组方差比较
+bartlett.test(height ~ sex, data = tt)  # Bartlett 方差齐性检验
+```
+
+```{r demo17-var-solution}
+var.test(height ~ sex, data = tt)       # 两组方差比较
+bartlett.test(height ~ sex, data = tt)  # Bartlett 方差齐性检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习3：方差齐性检验
+
+**任务：** 基于练习1的 `tt`，用 `var.test()` 比较不同 `sex` 组的 `height` 方差。
+
+```{r ex17-3-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-3, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-3-hint}
+var.test(height ~ sex, data = tt)  # 检验两组 height 方差是否相同
+```
+
+```{r ex17-3-solution}
+var.test(height ~ sex, data = tt)  # 检验两组 height 方差是否相同
+```
+
+```{r ex17-3-check}
+gradethis::grade_code()
+```
+
+</div>
+### 三、t检验
+<div class="module-explain">
+
+`t.test()` 可用于单样本、两独立样本和配对样本。Word 说明：`alternative` 可设置双侧/大于/小于，`mu` 是原假设中的比较值，`paired` 指是否配对，`var.equal` 指是否假定方差齐，`conf.level` 指置信水平。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例4：三类t检验</div>
+
+```{r demo17-t-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-t, exercise=TRUE}
+t.test(tt$weight, mu = 65, alternative = "less")   # 单样本 t 检验：均值是否小于65
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE) # 两独立样本 t 检验
+t.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)         # 配对 t 检验
+```
+
+```{r demo17-t-solution}
+t.test(tt$weight, mu = 65, alternative = "less")   # 单样本 t 检验：均值是否小于65
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE) # 两独立样本 t 检验
+t.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)         # 配对 t 检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习4：两独立样本t检验
+
+**任务：** 基于练习1的 `tt`，比较不同 `sex` 组的 `weight`，不假定方差齐。
+
+```{r ex17-4-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-4, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-4-hint}
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE)  # 两独立样本 t 检验
+```
+
+```{r ex17-4-solution}
+t.test(weight ~ sex, data = tt, mu = 0, var.equal = FALSE)  # 两独立样本 t 检验
+```
+
+```{r ex17-4-check}
+gradethis::grade_code()
+```
+
+</div>
+### 四、方差分析
+<div class="module-explain">
+
+`aov()` 使用公式描述因变量和分组因素。单因素方差分析可用 `TukeyHSD()` 做 Word 示例中的两两比较；双因素可写 `因变量 ~ 因子1 + 因子2`，若研究交互效应则可用 `*`。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例5：单因素和双因素方差分析</div>
+
+```{r demo17-aov-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-aov, exercise=TRUE}
+tt$marriage <- as.factor(tt$marriage)  # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt) # 单因素方差分析
+summary(fit)                             # 查看总体方差分析结果
+TukeyHSD(fit)                            # Tukey 两两比较
+
+tt$huji <- as.factor(tt$huji)            # 将 huji 转为因子
+fit1 <- aov(weight ~ marriage + huji, data = tt) # 双因素方差分析
+summary(fit1)                            # 查看双因素分析结果
+```
+
+```{r demo17-aov-solution}
+tt$marriage <- as.factor(tt$marriage)  # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt) # 单因素方差分析
+summary(fit)                             # 查看总体方差分析结果
+TukeyHSD(fit)                            # Tukey 两两比较
+
+tt$huji <- as.factor(tt$huji)            # 将 huji 转为因子
+fit1 <- aov(weight ~ marriage + huji, data = tt) # 双因素方差分析
+summary(fit1)                            # 查看双因素分析结果
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习5：单因素方差分析
+
+**任务：** 基于练习1的 `tt`，把 `marriage` 转为因子，比较不同婚姻组的 `weight`，并做 Tukey 两两比较。
+
+```{r ex17-5-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-5, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-5-hint}
+tt$marriage <- as.factor(tt$marriage)   # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt)  # 单因素方差分析
+summary(fit)                              # 查看方差分析结果
+TukeyHSD(fit)                             # 进行两两比较
+```
+
+```{r ex17-5-solution}
+tt$marriage <- as.factor(tt$marriage)   # 将 marriage 转为因子
+fit <- aov(weight ~ marriage, data = tt)  # 单因素方差分析
+summary(fit)                              # 查看方差分析结果
+TukeyHSD(fit)                             # 进行两两比较
+```
+
+```{r ex17-5-check}
+gradethis::grade_code()
+```
+
+</div>
+### 五、卡方检验
+<div class="module-explain">
+
+分类变量之间可先构造列联表，再用 `chisq.test()`。Word 同时介绍提取理论频数、连续性校正、Fisher 精确检验，以及 2×2 配对资料的 McNemar 检验。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例6：卡方与Fisher/McNemar</div>
+
+```{r demo17-chi-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-chi, exercise=TRUE}
+table1 <- table(tt$sex, tt$marriage)      # 创建 sex×marriage 列联表
+chisq.test(table1)$expected                # 查看理论频数
+chisq.test(table1)                         # Pearson 卡方检验
+chisq.test(table1, correct = TRUE)         # 使用连续性校正（适用时）
+fisher.test(table1)                        # Fisher 精确检验
+
+table2 <- table(tt$sex, tt$insomnia)       # 构造2×2表（应结合实际设计判断是否配对）
+mcnemar.test(table2)                       # McNemar 配对卡方检验
+```
+
+```{r demo17-chi-solution}
+table1 <- table(tt$sex, tt$marriage)      # 创建 sex×marriage 列联表
+chisq.test(table1)$expected                # 查看理论频数
+chisq.test(table1)                         # Pearson 卡方检验
+chisq.test(table1, correct = TRUE)         # 使用连续性校正（适用时）
+fisher.test(table1)                        # Fisher 精确检验
+
+table2 <- table(tt$sex, tt$insomnia)       # 构造2×2表（应结合实际设计判断是否配对）
+mcnemar.test(table2)                       # McNemar 配对卡方检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习6：列联表卡方检验
+
+**任务：** 基于练习1的 `tt`，构造 `sex` 与 `marriage` 的列联表 `table1`，查看理论频数并完成卡方检验。
+
+```{r ex17-6-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-6, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-6-hint}
+table1 <- table(tt$sex, tt$marriage)  # 构造列联表
+chisq.test(table1)$expected            # 查看理论频数
+chisq.test(table1)                     # 进行卡方检验
+```
+
+```{r ex17-6-solution}
+table1 <- table(tt$sex, tt$marriage)  # 构造列联表
+chisq.test(table1)$expected            # 查看理论频数
+chisq.test(table1)                     # 进行卡方检验
+```
+
+```{r ex17-6-check}
+gradethis::grade_code()
+```
+
+</div>
+### 六、秩和检验
+<div class="module-explain">
+
+`wilcox.test()` 可完成单样本、两独立样本和配对的非参数检验；`paired` 指是否配对，`alternative` 指备择方向，`mu` 指比较值。多组独立样本可用 `kruskal.test()`。
+
+</div>
+<div class="module-example">
+
+<div class="module-label">示例7：秩和检验</div>
+
+```{r demo17-rank-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r demo17-rank, exercise=TRUE}
+wilcox.test(tt$weight, mu = 65, alternative = "less") # 单样本符号秩检验
+wilcox.test(weight ~ sex, data = tt, mu = 0)           # 两独立样本秩和检验
+wilcox.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)       # 配对样本秩和检验
+kruskal.test(weight ~ sleep, data = tt)                 # 多组独立样本秩和检验
+```
+
+```{r demo17-rank-solution}
+wilcox.test(tt$weight, mu = 65, alternative = "less") # 单样本符号秩检验
+wilcox.test(weight ~ sex, data = tt, mu = 0)           # 两独立样本秩和检验
+wilcox.test(tt$eq5d_1, tt$eq5d_2, paired = TRUE)       # 配对样本秩和检验
+kruskal.test(weight ~ sleep, data = tt)                 # 多组独立样本秩和检验
+```
+
+</div>
+<div class="module-exercise">
+
+#### 练习7：两独立样本秩和检验
+
+**任务：** 基于练习1的 `tt`，用 `wilcox.test()` 比较不同 `sex` 组的 `weight`。
+
+```{r ex17-7-setup, include=FALSE}
+r1517_replay("ex17-1")
+```
+
+```{r ex17-7, exercise=TRUE}
+# 在这里输入代码
+```
+
+```{r ex17-7-hint}
+wilcox.test(weight ~ sex, data = tt, mu = 0)  # 两独立样本秩和检验
+```
+
+```{r ex17-7-solution}
+wilcox.test(weight ~ sex, data = tt, mu = 0)  # 两独立样本秩和检验
+```
+
+```{r ex17-7-check}
+gradethis::grade_code()
+```
+
+</div>
+<div class="copy-area">
+
+### 第17讲：练习参考代码
+
+```{r r1517-copy-server-17, context="server", include=FALSE}
+observeEvent(input$r1517_copy_17, {
+  code <- c(
+    "# 练习1：导入并合并",
+    "t1 <- read.csv(\"elder1.csv\")  # 导入elder1",
+    "t2 <- read.csv(\"elder2.csv\")  # 导入elder2",
+    "tt <- merge(t1,t2,by=\"ID\",all=FALSE)  # 合并共同ID",
+    "",
+    "# 练习2：正态性",
+    "shapiro.test(tt$weight)  # Shapiro-Wilk检验",
+    "",
+    "# 练习3：方差齐性",
+    "var.test(height ~ sex, data=tt)  # 方差比较",
+    "",
+    "# 练习4：两独立样本t检验",
+    "t.test(weight ~ sex, data=tt, mu=0, var.equal=FALSE)  # Welch t检验",
+    "",
+    "# 练习5：单因素方差分析",
+    "tt$marriage <- as.factor(tt$marriage)  # marriage因子化",
+    "fit <- aov(weight ~ marriage, data=tt)  # ANOVA",
+    "summary(fit)  # 查看结果",
+    "TukeyHSD(fit)  # 两两比较",
+    "",
+    "# 练习6：卡方检验",
+    "table1 <- table(tt$sex,tt$marriage)  # 列联表",
+    "chisq.test(table1)$expected  # 理论频数",
+    "chisq.test(table1)  # 卡方检验",
+    "",
+    "# 练习7：秩和检验",
+    "wilcox.test(weight ~ sex, data=tt, mu=0)  # 两独立样本秩和检验"
+  )
+  clipr::write_clip(paste(code, collapse = "\n"), allow_non_interactive = TRUE)
+  output$r1517_copy_status_17 <- renderText("已复制本讲练习参考代码。")
+})
+```
+
+```{r r1517-copy-button-17, echo=FALSE}
+actionButton("r1517_copy_17", "复制本讲练习参考代码")
+br()
+textOutput("r1517_copy_status_17")
+```
+
+</div>
