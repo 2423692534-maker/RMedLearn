@@ -1,0 +1,89 @@
+name: GitHub installation check
+
+'on':
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  install:
+    name: ${{ matrix.platform }} / R release
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Windows
+            runner: windows-latest
+          - platform: Mac Intel
+            runner: macos-15-intel
+          - platform: Mac Apple silicon
+            runner: macos-15
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      R_KEEP_PKG_SOURCE: 'yes'
+    steps:
+      - name: Set up R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: false
+          cran: https://cloud.r-project.org
+
+      - name: Set up Pandoc
+        uses: r-lib/actions/setup-pandoc@v2
+
+      - name: Install dependencies and download this commit from GitHub
+        shell: Rscript {0}
+        run: |
+          options(
+            repos = c(CRAN = "https://cloud.r-project.org"),
+            timeout = max(600, getOption("timeout"))
+          )
+          packages <- c(
+            "remotes", "learnr", "shiny", "rmarkdown", "digest",
+            "jsonlite", "base64enc", "survival", "openxlsx", "foreign", "dplyr"
+          )
+          missing <- packages[!vapply(packages, requireNamespace, logical(1), quietly = TRUE)]
+          if (length(missing)) install.packages(missing, dependencies = NA)
+          stopifnot(all(vapply(packages, requireNamespace, logical(1), quietly = TRUE)))
+
+          repository <- Sys.getenv("GITHUB_REPOSITORY")
+          revision <- Sys.getenv("GITHUB_SHA")
+          stopifnot(nzchar(repository), nzchar(revision))
+          remotes::install_github(
+            repo = repository,
+            ref = revision,
+            auth_token = Sys.getenv("GITHUB_PAT"),
+            dependencies = NA,
+            upgrade = "never",
+            build_vignettes = FALSE,
+            force = TRUE
+          )
+
+      - name: Verify the installed package and exam resources
+        shell: Rscript {0}
+        run: |
+          library(RMedLearn)
+          stopifnot(
+            "run_exam" %in% getNamespaceExports("RMedLearn"),
+            is.function(RMedLearn::run_exam)
+          )
+          description <- packageDescription("RMedLearn")
+          stopifnot(identical(description$RemoteSha, Sys.getenv("GITHUB_SHA")))
+          exam <- system.file("tutorials", "exam", "exam.Rmd", package = "RMedLearn")
+          stopifnot(nzchar(exam), file.exists(exam), file.info(exam)$size > 0)
+          stopifnot(rmarkdown::pandoc_available())
+
+          cat("Repository:", Sys.getenv("GITHUB_REPOSITORY"), "\n")
+          cat("Installed commit:", description$RemoteSha, "\n")
+          cat("RMedLearn version:", as.character(packageVersion("RMedLearn")), "\n")
+          cat("System:", Sys.info()[["sysname"]], "\n")
+          cat("Architecture:", R.version$arch, "\n")
+          cat("Pandoc:", as.character(rmarkdown::pandoc_version()), "\n")
+          cat("Exam resource:", exam, "\n")
+          cat("Installation check passed.\n")
